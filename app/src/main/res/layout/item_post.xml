@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="10dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivPostUserAvatar"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:padding="2dp"
+                android:background="@drawable/bg_avatar_ring"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                app:strokeColor="@color/color_primary_light"
+                app:strokeWidth="1.5dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="14dp"
+                android:layout_toEndOf="@id/ivPostUserAvatar"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvPostUserName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="User Name"
+                    android:textColor="@color/color_accent"
+                    android:textSize="17sp" />
+
+                <TextView
+                    android:id="@+id/tvPostUserTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Expertise"
+                    android:textColor="@color/color_secondary"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvPostTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="2h ago"
+                android:textColor="#BDBDBD"
+                android:textSize="11sp" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tvPostContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:lineSpacingExtra="5dp"
+            android:text="This is a skill-related post content..."
+            android:textColor="@color/color_accent"
+            android:textSize="15sp"
+            android:fontFamily="sans-serif"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/postMediaContainer"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginTop="14dp"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            android:visibility="gone">
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#1A361134"> <!-- Transparent accent -->
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_media_play"
+                    app:tint="@color/color_primary" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="#F5F5F5" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.button.MaterialButton
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Inspiring"
+                android:textSize="13sp"
+                app:icon="@android:drawable/btn_star_big_off"
+                app:iconTint="@color/color_primary"
+                android:textColor="@color/color_secondary"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAskQuestion"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_weight="1.2"
+                android:layout_height="wrap_content"
+                android:text="Ask Question"
+                android:textSize="13sp"
+                app:icon="@android:drawable/ic_menu_send"
+                app:iconTint="@color/color_primary"
+                android:textColor="@color/color_primary"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

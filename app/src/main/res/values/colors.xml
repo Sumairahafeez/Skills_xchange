@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- New Vibrant Color Theme -->
+    <color name="color_primary">#E56B70</color>
+    <color name="color_primary_light">#F391A0</color>
+    <color name="color_accent">#361134</color>
+    <color name="color_secondary">#722F5D</color>
+    <color name="color_background_soft">#FFF5F6</color>
+
+    <!-- Compatibility colors for the theme -->
+    <color name="color_primary_dark">#D15A5F</color>
+    <color name="color_background_dark">#361134</color> <!-- Using Plum for dark backgrounds -->
+</resources>
