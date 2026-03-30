@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white">
@@ -17,8 +16,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:contentScrim="@color/color_primary_dark"
-            app:expandedTitleGravity="bottom|center_horizontal"
-            app:expandedTitleMarginBottom="20dp"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:titleEnabled="false">
 
@@ -59,7 +56,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:fontFamily="sans-serif-black"
-                    android:text="Osama"
+                    android:text="Your Name"
                     android:textColor="@color/white"
                     android:textSize="28sp" />
 
@@ -68,8 +65,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-medium"
-                    android:text="Android Developer | Tech Explorer"
-                    android:textColor="#D1E9F6"
+                    android:text="Your tagline here"
+                    android:textColor="@color/color_primary_light"
                     android:textSize="14sp" />
 
             </LinearLayout>
@@ -98,7 +95,6 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <!-- Stats Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -125,7 +121,7 @@
                         android:text="Connections"
                         android:textColor="@color/color_secondary"
                         android:textSize="12sp"
-                        android:textAllCaps="true"/>
+                        android:textAllCaps="true" />
                 </LinearLayout>
 
                 <View
@@ -152,7 +148,7 @@
                         android:text="Rating"
                         android:textColor="@color/color_secondary"
                         android:textSize="12sp"
-                        android:textAllCaps="true"/>
+                        android:textAllCaps="true" />
                 </LinearLayout>
 
                 <View
@@ -179,12 +175,11 @@
                         android:text="Lessons"
                         android:textColor="@color/color_secondary"
                         android:textSize="12sp"
-                        android:textAllCaps="true"/>
+                        android:textAllCaps="true" />
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Bio Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -198,64 +193,42 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:lineSpacingExtra="4dp"
-                android:text="Passionate Android developer with 3+ years of experience in building modern mobile applications. Love sharing knowledge about Kotlin and UI design."
+                android:text="Add your bio by tapping Edit Profile below."
                 android:textColor="@color/color_secondary"
                 android:textSize="14sp" />
 
-            <!-- Skills Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:fontFamily="sans-serif-medium"
-                android:text="Skills &amp; Expertise"
+                android:text="Skills I Can Teach"
                 android:textColor="@color/color_accent"
                 android:textSize="18sp" />
 
             <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTeach"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:chipSpacingHorizontal="8dp">
+                android:layout_marginTop="8dp"
+                app:chipSpacingHorizontal="8dp" />
 
-                <com.google.android.material.chip.Chip
-                    style="@style/Widget.Material3.Chip.Suggestion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Kotlin"
-                    app:chipBackgroundColor="#D1E9F6"
-                    app:chipStrokeWidth="0dp"
-                    android:textColor="@color/color_primary_dark" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="Skills I Want to Learn"
+                android:textColor="@color/color_accent"
+                android:textSize="18sp" />
 
-                <com.google.android.material.chip.Chip
-                    style="@style/Widget.Material3.Chip.Suggestion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Jetpack Compose"
-                    app:chipBackgroundColor="#D1E9F6"
-                    app:chipStrokeWidth="0dp"
-                    android:textColor="@color/color_primary_dark" />
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupLearn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:chipSpacingHorizontal="8dp" />
 
-                <com.google.android.material.chip.Chip
-                    style="@style/Widget.Material3.Chip.Suggestion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Firebase"
-                    app:chipBackgroundColor="#D1E9F6"
-                    app:chipStrokeWidth="0dp"
-                    android:textColor="@color/color_primary_dark" />
-
-                <com.google.android.material.chip.Chip
-                    style="@style/Widget.Material3.Chip.Suggestion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Material Design"
-                    app:chipBackgroundColor="#D1E9F6"
-                    app:chipStrokeWidth="0dp"
-                    android:textColor="@color/color_primary_dark" />
-            </com.google.android.material.chip.ChipGroup>
-
-            <!-- Buttons -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEditProfile"
                 style="@style/Widget.Material3.Button"

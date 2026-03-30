@@ -7,8 +7,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 
-class PostAdapter(private val postList: List<Post>, private val onAskQuestion: (Post) -> Unit) :
-    RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
+class PostAdapter(
+    private val postList: MutableList<Post>,
+    private val onAskQuestion: (Post) -> Unit
+) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvUserName: TextView = itemView.findViewById(R.id.tvPostUserName)
@@ -30,11 +32,16 @@ class PostAdapter(private val postList: List<Post>, private val onAskQuestion: (
         holder.tvUserTitle.text = post.userTitle
         holder.tvContent.text = post.content
         holder.tvTime.text = post.timestamp
-        
         holder.mediaContainer.visibility = if (post.hasVideo) View.VISIBLE else View.GONE
-        
         holder.btnAskQuestion.setOnClickListener { onAskQuestion(post) }
     }
 
     override fun getItemCount(): Int = postList.size
+
+    /** Replaces the current list and redraws the RecyclerView */
+    fun updatePosts(newPosts: MutableList<Post>) {
+        postList.clear()
+        postList.addAll(newPosts)
+        notifyDataSetChanged()
+    }
 }

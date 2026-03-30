@@ -3,12 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/color_background_soft">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/color_primary">
+        android:background="@color/color_primary"
+        app:elevation="4dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/createPostToolbar"
@@ -16,8 +17,10 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
             app:navigationIconTint="@color/white"
-            app:title="Create Post"
-            app:titleTextColor="@color/white" />
+            app:title="Share a Skill"
+            app:titleTextColor="@color/white"
+            app:subtitle="Let your knowledge inspire others"
+            app:subtitleTextColor="#FFFDE8E8" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -31,63 +34,263 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#E0E0E0"
-                app:strokeWidth="1dp">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:boxStrokeWidth="0dp"
-                    app:boxStrokeWidthFocused="0dp">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPostContent"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="What skill are you sharing today?"
-                        android:gravity="top"
-                        android:inputType="textMultiLine"
-                        android:minLines="8"
-                        android:background="@android:color/transparent" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </com.google.android.material.card.MaterialCardView>
-
+            <!-- Author Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_marginBottom="20dp"
+                android:gravity="center_vertical">
 
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Add Video"
-                    app:icon="@android:drawable/ic_menu_slideshow" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardBackgroundColor="@color/color_primary">
+                    <TextView
+                        android:id="@+id/tvAuthorInitial"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="Y"
+                        android:gravity="center"
+                        android:textColor="@color/white"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Add Photo"
-                    app:icon="@android:drawable/ic_menu_camera" />
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvAuthorName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="You"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/color_accent" />
+                    <!-- Tagline dropdown trigger -->
+                    <TextView
+                        android:id="@+id/tvAuthorTagline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tap to set your tagline ▾"
+                        android:textSize="12sp"
+                        android:textColor="@color/color_primary"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp" />
+                </LinearLayout>
             </LinearLayout>
 
+            <!-- Post Title -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPostTitle"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Post Title (e.g., 'How I learned Kotlin in 30 days')"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxStrokeColor="@color/color_primary"
+                app:hintTextColor="@color/color_secondary">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPostTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"
+                    android:textColor="@color/color_accent"
+                    android:maxLines="2" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Post Content -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPostContent"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:hint="What skill are you sharing today? Tell your story..."
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxStrokeColor="@color/color_primary"
+                app:hintTextColor="@color/color_secondary"
+                app:counterEnabled="true"
+                app:counterMaxLength="500">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPostContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minLines="5"
+                    android:maxLines="12"
+                    android:textColor="@color/color_accent" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- ── MEDIA SECTION ── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Media"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="@color/color_accent"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Photo preview card (hidden until photo picked) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPhotoPreview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#F0E0E0"
+                app:strokeWidth="1dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:id="@+id/ivPhotoPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop" />
+
+                    <!-- Remove photo button -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fabRemovePhoto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="8dp"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        app:fabSize="mini"
+                        app:backgroundTint="#CC000000"
+                        app:tint="@color/white"
+                        app:elevation="4dp" />
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Video selected indicator (hidden until video picked) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardVideoPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="#FFF0F0"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_media_play"
+                        app:tint="@color/color_primary" />
+
+                    <TextView
+                        android:id="@+id/tvVideoName"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="video_selected.mp4"
+                        android:textColor="@color/color_accent"
+                        android:textSize="13sp"
+                        android:ellipsize="end"
+                        android:maxLines="1" />
+
+                    <ImageView
+                        android:id="@+id/ivRemoveVideo"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:tint="@color/color_secondary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Photo / Video pick buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddPhoto"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="📷  Add Photo"
+                    android:textColor="@color/color_primary"
+                    app:strokeColor="@color/color_primary"
+                    app:cornerRadius="10dp" />
+
+                <Space android:layout_width="10dp" android:layout_height="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddVideo"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="🎬  Add Video"
+                    android:textColor="@color/color_primary"
+                    app:strokeColor="@color/color_primary"
+                    app:cornerRadius="10dp" />
+            </LinearLayout>
+
+            <!-- ── SKILL TAGS ── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tag Your Skills"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="@color/color_accent"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupSkillTags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="6dp"
+                app:chipSpacingVertical="4dp"
+                android:layout_marginBottom="28dp" />
+
+            <!-- Submit -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSubmitPost"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="32dp"
-                android:text="Share Post"
+                android:text="Share Post ✨"
                 android:textStyle="bold"
-                app:cornerRadius="12dp"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                app:cornerRadius="14dp"
                 android:backgroundTint="@color/color_primary" />
 
         </LinearLayout>

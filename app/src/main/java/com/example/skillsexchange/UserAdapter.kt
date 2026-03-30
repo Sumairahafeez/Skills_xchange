@@ -5,14 +5,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 
-class UserAdapter(private val userList: List<User>, private var isGridLayout: Boolean) :
-    RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
+class UserAdapter(
+    private var userList: MutableList<User>,
+    private val onUserClick: (User) -> Unit
+) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
     class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvUserName: TextView = itemView.findViewById(R.id.tvUserName)
         val tvUserSkill: TextView = itemView.findViewById(R.id.tvUserSkill)
         val tvRating: TextView = itemView.findViewById(R.id.tvRating)
+        val btnConnect: MaterialButton = itemView.findViewById(R.id.btnConnect)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -23,14 +27,16 @@ class UserAdapter(private val userList: List<User>, private var isGridLayout: Bo
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val user = userList[position]
         holder.tvUserName.text = user.name
-        holder.tvUserSkill.text = "Offering: ${user.skillOffered}"
+        holder.tvUserSkill.text = "Teaches: ${user.teachSkills.joinToString(", ")}"
         holder.tvRating.text = user.rating.toString()
+        holder.btnConnect.setOnClickListener { onUserClick(user) }
+        holder.itemView.setOnClickListener { onUserClick(user) }
     }
 
     override fun getItemCount(): Int = userList.size
 
-    fun updateLayout(isGrid: Boolean) {
-        this.isGridLayout = isGrid
+    fun updateList(newList: List<User>) {
+        userList = newList.toMutableList()
         notifyDataSetChanged()
     }
 }
