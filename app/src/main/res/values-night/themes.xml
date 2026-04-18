@@ -1,7 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.SkillsExchange" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <!-- Keep same light theme even in night mode for consistency -->
+    <style name="Base.Theme.SkillsExchange" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorSecondary">@color/color_secondary</item>
+        <item name="colorTertiary">@color/color_accent_light</item>
+        <item name="colorSurface">@color/color_bg_surface</item>
+        <item name="android:colorBackground">@color/color_bg_page</item>
+        <item name="colorOnBackground">@color/color_text_primary</item>
+        <item name="colorOnSurface">@color/color_text_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/color_bg_input</item>
+        <item name="colorOnPrimaryContainer">@color/color_primary_dark</item>
+        <item name="colorSurfaceVariant">@color/color_bg_input</item>
+        <item name="colorOnSurfaceVariant">@color/color_secondary</item>
+        <item name="android:windowBackground">@color/color_bg_page</item>
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:textColorPrimary">@color/color_text_primary</item>
+        <item name="android:textColorSecondary">@color/color_text_secondary</item>
+        <item name="elevationOverlayEnabled">false</item>
     </style>
 </resources>

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background_soft"
+    android:background="@color/white"
     android:fillViewport="true">
 
     <LinearLayout
@@ -11,11 +11,11 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header -->
+        <!-- Hero Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:background="@color/color_accent"
+            android:background="@color/color_primary"
             android:orientation="vertical"
             android:gravity="bottom"
             android:paddingStart="28dp"
@@ -23,19 +23,32 @@
             android:paddingBottom="28dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Join SkillsXchange"
-                android:textColor="@color/white"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:text="SX"
+                android:gravity="center"
+                android:textColor="@color/color_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_avatar_ring"
+                android:backgroundTint="@color/white"
+                android:layout_marginBottom="14dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Create your account and start sharing skills"
-                android:textColor="#FFDDD5E8"
-                android:textSize="14sp"
+                android:text="Join SkillsXchange"
+                android:textColor="@color/white"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.01" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create your professional skills profile"
+                android:textColor="#B3FFFFFF"
+                android:textSize="13sp"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
@@ -44,10 +57,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:paddingTop="28dp"
-            android:paddingBottom="32dp">
+            android:paddingHorizontal="28dp"
+            android:paddingTop="32dp"
+            android:paddingBottom="36dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create account"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/color_text_primary"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="It's free and always will be"
+                android:textSize="13sp"
+                android:textColor="@color/color_text_secondary"
+                android:layout_marginBottom="24dp" />
 
             <!-- Full Name -->
             <com.google.android.material.textfield.TextInputLayout
@@ -56,21 +85,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                android:hint="Full Name"
-                app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
-                app:startIconTint="@color/color_primary"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
+                android:hint="Full name"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
                 app:boxStrokeColor="@color/color_primary"
-                app:hintTextColor="@color/color_secondary">
+                app:hintTextColor="@color/color_text_secondary">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSignupName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName|textCapWords"
-                    android:textColor="@color/color_accent" />
+                    android:textColor="@color/color_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Email -->
@@ -81,20 +109,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
                 android:hint="Email address"
-                app:startIconDrawable="@android:drawable/ic_dialog_email"
-                app:startIconTint="@color/color_primary"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
                 app:boxStrokeColor="@color/color_primary"
-                app:hintTextColor="@color/color_secondary">
+                app:hintTextColor="@color/color_text_secondary">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSignupEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress"
-                    android:textColor="@color/color_accent" />
+                    android:textColor="@color/color_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Password -->
@@ -104,24 +131,22 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                android:hint="Password"
-                app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
-                app:startIconTint="@color/color_primary"
+                android:hint="Password (6+ characters)"
                 app:endIconMode="password_toggle"
-                app:endIconTint="@color/color_secondary"
-                app:helperText="Minimum 6 characters"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
+                app:endIconTint="@color/color_text_secondary"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
                 app:boxStrokeColor="@color/color_primary"
-                app:hintTextColor="@color/color_secondary">
+                app:hintTextColor="@color/color_text_secondary">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSignupPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
-                    android:textColor="@color/color_accent" />
+                    android:textColor="@color/color_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Confirm Password -->
@@ -130,40 +155,64 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:hint="Confirm Password"
-                app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
-                app:startIconTint="@color/color_primary"
+                android:layout_marginBottom="28dp"
+                android:hint="Confirm password"
                 app:endIconMode="password_toggle"
-                app:endIconTint="@color/color_secondary"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
+                app:endIconTint="@color/color_text_secondary"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
                 app:boxStrokeColor="@color/color_primary"
-                app:hintTextColor="@color/color_secondary">
+                app:hintTextColor="@color/color_text_secondary">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSignupConfirmPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
-                    android:textColor="@color/color_accent" />
+                    android:textColor="@color/color_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Sign Up Button -->
+            <!-- Terms note -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="By clicking Agree &amp; Join, you agree to the SkillsXchange User Agreement, Privacy Policy, and Cookie Policy."
+                android:textSize="11sp"
+                android:textColor="@color/color_text_secondary"
+                android:lineSpacingExtra="2dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Agree & Join Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSignup"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="Create Account"
+                android:layout_height="52dp"
+                android:text="Agree &amp; Join"
                 android:textStyle="bold"
                 android:textSize="16sp"
                 android:textColor="@color/white"
                 android:backgroundTint="@color/color_primary"
-                app:cornerRadius="14dp"
-                android:layout_marginBottom="20dp" />
+                app:cornerRadius="26dp"
+                android:layout_marginBottom="24dp" />
 
-            <!-- Back to Login -->
+            <!-- Divider -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+                <View android:layout_width="0dp" android:layout_height="1dp"
+                    android:layout_weight="1" android:background="@color/color_divider" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="  or  " android:textColor="@color/color_text_muted" android:textSize="13sp" />
+                <View android:layout_width="0dp" android:layout_height="1dp"
+                    android:layout_weight="1" android:background="@color/color_divider" />
+            </LinearLayout>
+
+            <!-- Already have account -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -172,9 +221,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Already have an account? "
+                    android:text="Already on SkillsXchange? "
                     android:textSize="14sp"
-                    android:textColor="@color/color_secondary" />
+                    android:textColor="@color/color_text_secondary" />
                 <TextView
                     android:id="@+id/btnBackToLogin"
                     android:layout_width="wrap_content"

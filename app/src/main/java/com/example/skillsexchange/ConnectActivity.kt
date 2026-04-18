@@ -29,7 +29,12 @@ class ConnectActivity : AppCompatActivity() {
 
         rvSuggestions.layoutManager = GridLayoutManager(this, 2)
         rvSuggestions.adapter = SuggestionAdapter(suggestions) { user ->
-            Toast.makeText(this, "Request sent to ${user.name}!", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, ChatActivity::class.java).apply {
+                putExtra("userId", user.id)
+                putExtra("userName", user.name)
+                putExtra("userTagline", user.tagline)
+            }
+            startActivity(intent)
         }
 
         bottomNavigation.selectedItemId = R.id.nav_connections

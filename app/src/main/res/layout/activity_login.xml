@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background_soft"
+    android:background="@color/white"
     android:fillViewport="true">
 
     <LinearLayout
@@ -14,73 +14,66 @@
         <!-- Hero Header -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="260dp"
+            android:layout_height="220dp"
             android:background="@color/color_primary"
             android:orientation="vertical"
-            android:gravity="bottom"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
-            android:paddingBottom="32dp">
+            android:gravity="center"
+            android:paddingHorizontal="32dp">
 
-            <!-- App Icon circle -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                app:cardCornerRadius="36dp"
-                app:cardBackgroundColor="#FFFDE8E8"
-                app:cardElevation="6dp"
-                android:layout_marginBottom="16dp">
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="⚡"
-                    android:gravity="center"
-                    android:textSize="32sp" />
-            </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="SX"
+                android:gravity="center"
+                android:textColor="@color/color_primary"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_avatar_ring"
+                android:backgroundTint="@color/white"
+                android:layout_marginBottom="16dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="SkillsXchange"
                 android:textColor="@color/white"
-                android:textSize="30sp"
+                android:textSize="32sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.02" />
+                android:letterSpacing="0.01" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Share what you know. Learn what you love."
-                android:textColor="#FFFDE8E8"
+                android:text="Connect. Learn. Grow."
+                android:textColor="#B3FFFFFF"
                 android:textSize="14sp"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="6dp" />
         </LinearLayout>
 
-        <!-- Form Card -->
+        <!-- Form -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:paddingTop="32dp"
-            android:paddingBottom="32dp">
+            android:paddingHorizontal="28dp"
+            android:paddingTop="36dp"
+            android:paddingBottom="36dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Welcome back"
-                android:textSize="24sp"
+                android:text="Sign in"
+                android:textSize="26sp"
                 android:textStyle="bold"
-                android:textColor="@color/color_accent"
-                android:layout_marginBottom="4dp" />
+                android:textColor="@color/color_text_primary"
+                android:layout_marginBottom="6dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sign in to continue your journey"
+                android:text="Stay updated on your professional world"
                 android:textSize="14sp"
-                android:textColor="@color/color_secondary"
+                android:textColor="@color/color_text_secondary"
                 android:layout_marginBottom="28dp" />
 
             <!-- Email -->
@@ -89,23 +82,21 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Email address"
-                app:startIconDrawable="@android:drawable/ic_dialog_email"
-                app:startIconTint="@color/color_primary"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
+                android:layout_marginBottom="14dp"
+                android:hint="Email or phone"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
                 app:boxStrokeColor="@color/color_primary"
-                app:hintTextColor="@color/color_secondary">
+                app:hintTextColor="@color/color_text_secondary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etLoginEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress"
-                    android:textColor="@color/color_accent" />
+                    android:textColor="@color/color_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Password -->
@@ -114,52 +105,49 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="10dp"
                 android:hint="Password"
-                app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
-                app:startIconTint="@color/color_primary"
                 app:endIconMode="password_toggle"
-                app:endIconTint="@color/color_secondary"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
+                app:endIconTint="@color/color_text_secondary"
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
                 app:boxStrokeColor="@color/color_primary"
-                app:hintTextColor="@color/color_secondary">
+                app:hintTextColor="@color/color_text_secondary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etLoginPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
-                    android:textColor="@color/color_accent" />
+                    android:textColor="@color/color_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Forgot Password -->
             <TextView
                 android:id="@+id/tvForgotPassword"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end"
                 android:text="Forgot password?"
                 android:textColor="@color/color_primary"
                 android:textSize="13sp"
+                android:textStyle="bold"
                 android:layout_marginBottom="28dp"
                 android:clickable="true"
                 android:focusable="true" />
 
-            <!-- Login Button -->
+            <!-- Sign In Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogin"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="52dp"
                 android:text="Sign In"
                 android:textStyle="bold"
                 android:textSize="16sp"
                 android:textColor="@color/white"
                 android:backgroundTint="@color/color_primary"
-                app:cornerRadius="14dp"
-                android:layout_marginBottom="20dp" />
+                app:cornerRadius="26dp"
+                android:layout_marginBottom="24dp" />
 
             <!-- Divider -->
             <LinearLayout
@@ -167,11 +155,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="20dp">
-                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" android:background="#E0D0D0" />
+                android:layout_marginBottom="24dp">
+                <View android:layout_width="0dp" android:layout_height="1dp"
+                    android:layout_weight="1" android:background="@color/color_divider" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="  or  " android:textColor="@color/color_secondary" android:textSize="13sp" />
-                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" android:background="#E0D0D0" />
+                    android:text="  or  " android:textColor="@color/color_text_muted" android:textSize="13sp" />
+                <View android:layout_width="0dp" android:layout_height="1dp"
+                    android:layout_weight="1" android:background="@color/color_divider" />
             </LinearLayout>
 
             <!-- Sign Up Prompt -->
@@ -183,14 +173,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Don't have an account? "
+                    android:text="New to SkillsXchange? "
                     android:textSize="14sp"
-                    android:textColor="@color/color_secondary" />
+                    android:textColor="@color/color_text_secondary" />
                 <TextView
                     android:id="@+id/btnGoToSignup"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sign up"
+                    android:text="Join now"
                     android:textSize="14sp"
                     android:textColor="@color/color_primary"
                     android:textStyle="bold"

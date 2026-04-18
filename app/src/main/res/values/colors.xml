@@ -3,14 +3,33 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- New Vibrant Color Theme -->
-    <color name="color_primary">#E56B70</color>
-    <color name="color_primary_light">#F391A0</color>
-    <color name="color_accent">#361134</color>
-    <color name="color_secondary">#722F5D</color>
-    <color name="color_background_soft">#FFF5F6</color>
+    <!-- LinkedIn-style Professional Light Theme -->
+    <color name="color_bg_page">#F3F2EF</color>
+    <color name="color_bg_surface">#FFFFFF</color>
+    <color name="color_bg_input">#EEF3F8</color>
 
-    <!-- Compatibility colors for the theme -->
-    <color name="color_primary_dark">#D15A5F</color>
-    <color name="color_background_dark">#361134</color> <!-- Using Plum for dark backgrounds -->
+    <color name="color_primary">#0A66C2</color>
+    <color name="color_primary_dark">#004182</color>
+    <color name="color_primary_light">#EEF3F8</color>
+
+    <color name="color_accent">#0A66C2</color>
+    <color name="color_accent_light">#70B5F9</color>
+
+    <color name="color_secondary">#56687A</color>
+    <color name="color_text_primary">#000000</color>
+    <color name="color_text_secondary">#56687A</color>
+    <color name="color_text_muted">#9BABBF</color>
+
+    <color name="color_divider">#E0E0E0</color>
+    <color name="color_card_stroke">#E9E5DF</color>
+
+    <!-- Legacy aliases -->
+    <color name="color_primary_dark2">#004182</color>
+    <color name="color_background_soft">#F3F2EF</color>
+    <color name="color_background_dark">#000000</color>
+    <color name="color_text_light">#FFFFFF</color>
+    <color name="color_bg_deep">#000000</color>
+    <color name="color_bg_card">#FFFFFF</color>
+    <color name="color_bg_elevated">#EEF3F8</color>
+    <color name="color_white">#FFFFFF</color>
 </resources>

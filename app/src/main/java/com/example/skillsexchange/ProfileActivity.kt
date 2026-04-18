@@ -29,31 +29,45 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
-        tvProfileName  = findViewById(R.id.tvProfileNameDetail)
-        tvTagline      = findViewById(R.id.tvProfileTagline)
+        tvProfileName = findViewById(R.id.tvProfileNameDetail)
+        tvTagline = findViewById(R.id.tvProfileTagline)
         chipGroupTeach = findViewById(R.id.chipGroupTeach)
         chipGroupLearn = findViewById(R.id.chipGroupLearn)
 
-        // Load the signed-in user's name from SharedPreferences
-        val prefs    = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
+        // Load user name
+        val prefs = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
         val userName = prefs.getString("user_name", "Osama") ?: "Osama"
         tvProfileName.text = userName
 
+        // Toolbar back
         findViewById<MaterialToolbar>(R.id.profileToolbar)
             .setNavigationOnClickListener { finish() }
 
+        // Render skills
         renderChips(chipGroupTeach, teachSkills, isTeach = true)
         renderChips(chipGroupLearn, learnSkills, isTeach = false)
 
-        findViewById<Button>(R.id.btnEditProfile).setOnClickListener { showEditProfileDialog(prefs) }
+        // Buttons
+        findViewById<Button>(R.id.btnEditProfile).setOnClickListener {
+            showEditProfileDialog(prefs)
+        }
 
         findViewById<Button>(R.id.btnLogout).setOnClickListener {
-            // Clear login state and go back to Login screen
             prefs.edit().putBoolean("is_logged_in", false).apply()
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            val intent = Intent(this, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
             startActivity(intent)
         }
+
+        // Profile photo click - COMMENTED OUT because layout ID is missing
+        // We'll add it properly once you share the layout
+        /*
+        val ivProfileAvatar = findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.ivProfileAvatar)
+        ivProfileAvatar?.setOnClickListener {
+            Toast.makeText(this, "Profile photo picker coming soon...", Toast.LENGTH_SHORT).show()
+        }
+        */
     }
 
     private fun renderChips(group: ChipGroup, skills: MutableList<String>, isTeach: Boolean) {
@@ -72,6 +86,7 @@ class ProfileActivity : AppCompatActivity() {
             }
             group.addView(chip)
         }
+
         val addChip = Chip(this).apply {
             text = "+ Add skill"
             setChipBackgroundColorResource(R.color.color_background_soft)
@@ -83,21 +98,29 @@ class ProfileActivity : AppCompatActivity() {
 
     private fun showAddSkillDialog(skills: MutableList<String>, group: ChipGroup, isTeach: Boolean) {
         val dialog = BottomSheetDialog(this)
-        val view   = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
         dialog.setContentView(view)
 
-        val etSkill  = view.findViewById<TextInputEditText>(R.id.etEditName)
-        val tilName  = view.findViewById<TextInputLayout>(R.id.tilEditName)
+        val etSkill = view.findViewById<TextInputEditText>(R.id.etEditName)
+        val tilName = view.findViewById<TextInputLayout>(R.id.tilEditName)
         tilName.hint = "Enter skill name"
-        view.findViewById<TextInputLayout>(R.id.tilEditTagline).visibility = View.GONE
-        view.findViewById<TextInputLayout>(R.id.tilEditBio).visibility     = View.GONE
+
+        view.findViewById<TextInputLayout>(R.id.tilEditTagline)?.visibility = View.GONE
+        view.findViewById<TextInputLayout>(R.id.tilEditBio)?.visibility = View.GONE
 
         val btnSave = view.findViewById<Button>(R.id.btnSaveProfile)
         btnSave.text = "Add Skill"
+
         btnSave.setOnClickListener {
             val skill = etSkill.text.toString().trim()
-            if (skill.isEmpty()) { Toast.makeText(this, "Please enter a skill", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            if (skills.contains(skill)) { Toast.makeText(this, "Skill already added", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            if (skill.isEmpty()) {
+                Toast.makeText(this, "Please enter a skill", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (skills.contains(skill)) {
+                Toast.makeText(this, "Skill already added", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             skills.add(skill)
             renderChips(group, skills, isTeach)
             dialog.dismiss()
@@ -106,23 +129,25 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun showEditProfileDialog(prefs: android.content.SharedPreferences) {
-        val dialog  = BottomSheetDialog(this)
-        val view    = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
         dialog.setContentView(view)
 
-        val etName    = view.findViewById<TextInputEditText>(R.id.etEditName)
+        val etName = view.findViewById<TextInputEditText>(R.id.etEditName)
         val etTagline = view.findViewById<TextInputEditText>(R.id.etEditTagline)
-        val btnSave   = view.findViewById<Button>(R.id.btnSaveProfile)
+        val btnSave = view.findViewById<Button>(R.id.btnSaveProfile)
 
         etName.setText(tvProfileName.text)
         etTagline.setText(tvTagline.text)
 
         btnSave.setOnClickListener {
             val name = etName.text.toString().trim()
-            if (name.isEmpty()) { Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            if (name.isEmpty()) {
+                Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             tvProfileName.text = name
-            tvTagline.text     = etTagline.text.toString().trim()
-            // Persist updated name
+            tvTagline.text = etTagline.text.toString().trim()
             prefs.edit().putString("user_name", name).apply()
             dialog.dismiss()
         }
