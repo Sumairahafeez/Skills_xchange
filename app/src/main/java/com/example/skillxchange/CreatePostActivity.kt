@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.TextView
@@ -23,10 +22,6 @@ import com.google.android.material.textfield.TextInputLayout
 import java.util.UUID
 
 class CreatePostActivity : AppCompatActivity() {
-
-    companion object {
-        val sharedPosts: MutableList<Post> = mutableListOf()
-    }
 
     private val selectedTags   = mutableListOf<String>()
     private var selectedPhotoUri: Uri? = null
@@ -49,6 +44,14 @@ class CreatePostActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 result.data?.data?.let { uri ->
+                    try {
+                        contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                     selectedPhotoUri = uri
                     showPhotoPreview(uri)
                 }
@@ -118,8 +121,12 @@ class CreatePostActivity : AppCompatActivity() {
         }
 
         btnPhoto.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            intent.type = "image/*"
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }
             photoPickerLauncher.launch(intent)
         }
 
@@ -152,9 +159,12 @@ class CreatePostActivity : AppCompatActivity() {
                     likes     = 0,
                     comments  = 0,
                     hasVideo  = false,
-                    imageUri  = selectedPhotoUri?.toString() // Save the photo URI
+                    imageUri  = selectedPhotoUri?.toString()
                 )
-                sharedPosts.add(0, newPost)
+                
+                // Save post persistently
+                PostCache.savePost(this, newPost)
+
                 Toast.makeText(this, "Your skill post is live! 🎉", Toast.LENGTH_LONG).show()
                 setResult(RESULT_OK)
                 finish()

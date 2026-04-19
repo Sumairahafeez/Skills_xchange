@@ -20,10 +20,13 @@ object UserCache {
 
     fun saveUser(context: Context, user: User) {
         val users = getAllUsers(context).toMutableList()
-        if (users.none { it.id == user.id }) {
+        val index = users.indexOfFirst { it.id == user.id }
+        if (index != -1) {
+            users[index] = user
+        } else {
             users.add(user)
-            persistUsers(context, users)
         }
+        persistUsers(context, users)
     }
 
     private fun persistUsers(context: Context, users: List<User>) {

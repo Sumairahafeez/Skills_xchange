@@ -163,6 +163,7 @@
                     android:gravity="center"
                     android:orientation="vertical">
                     <TextView
+                        android:id="@+id/tvLessonsCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-black"
@@ -170,6 +171,7 @@
                         android:textColor="@color/color_accent"
                         android:textSize="20sp" />
                     <TextView
+                        android:id="@+id/tvLessonsLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Lessons"
@@ -189,6 +191,7 @@
                 android:textSize="18sp" />
 
             <TextView
+                android:id="@+id/tvProfileBio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"

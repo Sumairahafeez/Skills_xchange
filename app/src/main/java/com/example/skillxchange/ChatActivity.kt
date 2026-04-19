@@ -15,6 +15,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var messages: MutableList<ChatMessage>
     private lateinit var otherUserId: String
     private lateinit var currentUserId: String
+    private lateinit var rvMessages: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,20 +32,32 @@ class ChatActivity : AppCompatActivity() {
         toolbar.title = userName
         toolbar.setNavigationOnClickListener { finish() }
 
-        val rvMessages = findViewById<RecyclerView>(R.id.rvMessages)
+        rvMessages = findViewById(R.id.rvMessages)
         val etMessage = findViewById<EditText>(R.id.etChatMessage)
         val btnSend = findViewById<ImageButton>(R.id.btnSendMessage)
 
         messages = ChatCache.load(this, currentUserId, otherUserId)
         adapter = ChatAdapter(messages, currentUserId)
 
-        rvMessages.layoutManager = LinearLayoutManager(this).apply {
+        val layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
+        rvMessages.layoutManager = layoutManager
         rvMessages.adapter = adapter
 
         // Mark as viewed when entering chat
         ChatCache.markViewed(this, currentUserId, otherUserId, true)
+
+        // Auto scroll to bottom when keyboard appears
+        rvMessages.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
+            if (bottom < oldBottom) {
+                rvMessages.postDelayed({
+                    if (messages.isNotEmpty()) {
+                        rvMessages.smoothScrollToPosition(messages.size - 1)
+                    }
+                }, 100)
+            }
+        }
 
         // If there's a pre-filled question
         if (!prefilledQuestion.isNullOrEmpty()) {

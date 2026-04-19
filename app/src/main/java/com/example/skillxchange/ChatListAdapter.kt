@@ -2,10 +2,12 @@ package com.example.skillxchange
 
 import android.content.Context
 import android.graphics.Typeface
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 
 class ChatListAdapter(
@@ -21,51 +23,88 @@ class ChatListAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatRowVH {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_chat_row, parent, false)
-        return ChatRowVH(view)
+        return try {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_chat_row, parent, false)
+            ChatRowVH(view)
+        } catch (e: Exception) {
+            Log.e("ChatListAdapter", "Error creating ViewHolder", e)
+            // Return a dummy view to avoid immediate crash
+            ChatRowVH(View(parent.context))
+        }
     }
 
     override fun onBindViewHolder(holder: ChatRowVH, position: Int) {
-        val user = users[position]
-        holder.tvName.text = user.name
-        holder.tvTagline.text = user.tagline
+        try {
+            val user = users[position]
+            holder.tvName.text = user.name
+            holder.tvTagline.text = user.tagline
 
-        val context = holder.itemView.context
-        val prefs = context.getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
-        val currentUserId = prefs.getString("user_id", "") ?: ""
+            val context = holder.itemView.context
+            val prefs = context.getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
+            val currentUserId = prefs.getString("user_id", "") ?: ""
 
-        val messages = ChatCache.load(context, currentUserId, user.id)
-        val lastMsg = messages.lastOrNull()
-        
-        holder.tvLastMsg.text = if (lastMsg != null)
-            lastMsg.text.take(40) + if (lastMsg.text.length > 40) "..." else ""
-        else ""
+            val messages = try {
+                ChatCache.load(context, currentUserId, user.id)
+            } catch (e: Exception) {
+                Log.e("ChatListAdapter", "Error loading cache", e)
+                mutableListOf()
+            }
+            
+            val lastMsg = messages.lastOrNull()
+            
+            holder.tvLastMsg.text = if (lastMsg != null)
+                lastMsg.text.take(40) + if (lastMsg.text.length > 40) "..." else ""
+            else ""
 
-        val isViewed = ChatCache.isViewed(context, currentUserId, user.id)
-        
-        if (!isViewed && lastMsg != null && lastMsg.senderId != currentUserId) {
-            holder.tvName.setTypeface(null, Typeface.BOLD)
-            holder.tvLastMsg.setTypeface(null, Typeface.BOLD)
-            holder.tvLastMsg.setTextColor(context.getColor(R.color.color_text_primary))
-            holder.dot.visibility = View.VISIBLE
-        } else {
-            holder.tvName.setTypeface(null, Typeface.NORMAL)
-            holder.tvLastMsg.setTypeface(null, Typeface.NORMAL)
-            holder.tvLastMsg.setTextColor(context.getColor(R.color.color_text_secondary))
-            holder.dot.visibility = View.GONE
-        }
+            val isViewed = try {
+                ChatCache.isViewed(context, currentUserId, user.id)
+            } catch (e: Exception) {
+                true
+            }
+            
+            if (!isViewed && lastMsg != null && lastMsg.senderId != currentUserId) {
+                holder.tvName.setTypeface(null, Typeface.BOLD)
+                holder.tvLastMsg.setTypeface(null, Typeface.BOLD)
+                try {
+                    holder.tvLastMsg.setTextColor(context.getColor(R.color.color_text_primary))
+                } catch (e: Exception) {
+                    holder.tvLastMsg.setTextColor(android.graphics.Color.BLACK)
+                }
+                holder.dot.visibility = View.VISIBLE
+            } else {
+                holder.tvName.setTypeface(null, Typeface.NORMAL)
+                holder.tvLastMsg.setTypeface(null, Typeface.NORMAL)
+                try {
+                    holder.tvLastMsg.setTextColor(context.getColor(R.color.color_text_secondary))
+                } catch (e: Exception) {
+                    holder.tvLastMsg.setTextColor(android.graphics.Color.GRAY)
+                }
+                holder.dot.visibility = View.GONE
+            }
 
-        holder.itemView.setOnClickListener { 
-            ChatCache.markViewed(context, currentUserId, user.id, true)
-            onClick(user) 
+            holder.itemView.setOnClickListener { 
+                try {
+                    ChatCache.markViewed(context, currentUserId, user.id, true)
+                    onClick(user)
+                } catch (e: Exception) {
+                    Log.e("ChatListAdapter", "Error in click listener", e)
+                    Toast.makeText(context, "Error opening chat", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ChatListAdapter", "Error binding view holder", e)
         }
     }
 
     override fun getItemCount() = users.size
 
     fun updateList(newList: List<User>) {
-        users = newList
-        notifyDataSetChanged()
+        try {
+            users = newList
+            notifyDataSetChanged()
+        } catch (e: Exception) {
+            Log.e("ChatListAdapter", "Error updating list", e)
+        }
     }
 }

@@ -24,6 +24,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var postAdapter: PostAdapter
     private lateinit var currentUserId: String
 
+    // Keep seed posts as initial content if cache is empty
     private val seedPosts = mutableListOf(
         Post("p1", "u1", "Alex Thompson", "Kotlin Expert", "Just finished a tutorial on Coroutines! Check it out.", "2h ago", 15, 3, false),
         Post("p2", "u2", "Sarah Jenkins", "UI Designer", "New Figma shortcuts that will save you hours.", "5h ago", 42, 10, false),
@@ -105,7 +106,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun updateBadges(nav: BottomNavigationView) {
-        // Connection request badge
         val invs = ConnectionCache.getInvitationsForUser(this, currentUserId)
         if (invs.isNotEmpty()) {
             nav.getOrCreateBadge(R.id.nav_connections).number = invs.size
@@ -113,7 +113,6 @@ class HomeActivity : AppCompatActivity() {
             nav.removeBadge(R.id.nav_connections)
         }
 
-        // New message badge
         if (ChatCache.hasAnyUnviewed(this, currentUserId)) {
             nav.getOrCreateBadge(R.id.nav_messages).isVisible = true
         } else {
@@ -124,9 +123,15 @@ class HomeActivity : AppCompatActivity() {
     private fun buildFeedList(): MutableList<Post> {
         val friends = ConnectionCache.getFriendsForUser(this, currentUserId)
         val allPosts = mutableListOf<Post>()
-        allPosts.addAll(CreatePostActivity.sharedPosts)
+        
+        // Load persistent posts from cache
+        allPosts.addAll(PostCache.getAllPosts(this))
+        
+        // Add seed posts only if they aren't already represented (optional logic)
+        // For simplicity, we'll just add them to the bottom
         allPosts.addAll(seedPosts)
         
+        // Filter: Show only posts from friends OR posts created by current user
         return allPosts.filter { it.userId == currentUserId || friends.contains(it.userId) }.toMutableList()
     }
 
@@ -168,13 +173,11 @@ class HomeActivity : AppCompatActivity() {
             dialog.dismiss()
 
             if (rbPublic.isChecked) {
-                // Handle public question (Comment)
                 val comments = PostAdapter.publicComments.getOrPut(post.id) { mutableListOf() }
                 comments.add(questionText)
                 postAdapter.notifyDataSetChanged()
                 Toast.makeText(this, "Question posted publicly as a comment!", Toast.LENGTH_LONG).show()
             } else {
-                // Handle private question (Chat)
                 val intent = Intent(this, ChatActivity::class.java).apply {
                     putExtra("userId", post.userId)
                     putExtra("userName", post.userName)
