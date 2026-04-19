@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.skillsexchange"
+    namespace = "com.example.skillxchange"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.skillsexchange"
+        applicationId = "com.example.skillxchange"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.app.Activity
 import android.content.Intent
@@ -60,6 +60,7 @@ class CreatePostActivity : AppCompatActivity() {
         setContentView(R.layout.activity_create_post)
 
         val prefs    = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
+        val currentUserId = prefs.getString("user_id", "") ?: ""
         val userName = prefs.getString("user_name", "You") ?: "You"
         val initial  = userName.firstOrNull()?.uppercaseChar()?.toString() ?: "Y"
 
@@ -144,6 +145,7 @@ class CreatePostActivity : AppCompatActivity() {
                 val userTitle  = selectedTagline.ifEmpty { "Skills Exchange Member" }
                 val newPost    = Post(
                     id        = UUID.randomUUID().toString(),
+                    userId    = currentUserId,
                     userName  = userName,
                     userTitle = userTitle,
                     content   = "$title\n\n$content$tagSuffix",

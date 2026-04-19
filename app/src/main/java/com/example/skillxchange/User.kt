@@ -1,4 +1,4 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 data class User(
     val id: String = "",

@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SkillsExchange"
+rootProject.name = "SkillXchange"
 include(":app")
- 

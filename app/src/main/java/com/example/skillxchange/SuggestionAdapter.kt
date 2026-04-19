@@ -1,9 +1,11 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 
@@ -17,6 +19,7 @@ class SuggestionAdapter(
         val tvTitle: TextView = itemView.findViewById(R.id.tvSuggestionTitle)
         val tvMutual: TextView = itemView.findViewById(R.id.tvSuggestionMutual)
         val btnConnect: MaterialButton = itemView.findViewById(R.id.btnSuggestionConnect)
+        val btnMessage: ImageButton = itemView.findViewById(R.id.btnMessageSuggestion)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SuggestionViewHolder {
@@ -29,8 +32,18 @@ class SuggestionAdapter(
         val user = userList[position]
         holder.tvName.text = user.name
         holder.tvTitle.text = user.tagline
-        holder.tvMutual.text = "${user.teachSkills.size} skills to teach"
-        holder.btnConnect.setOnClickListener { onConnectClick(user) }
+        holder.tvMutual.text = "12 mutual skills"
+
+        holder.btnConnect.setOnClickListener {
+            holder.btnConnect.text = "Requested"
+            holder.btnConnect.isEnabled = false
+            onConnectClick(user)
+        }
+
+        holder.btnMessage.setOnClickListener {
+            // Optional: add message functionality later
+            Toast.makeText(holder.itemView.context, "Message feature coming soon!", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun getItemCount(): Int = userList.size

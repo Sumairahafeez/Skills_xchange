@@ -1,4 +1,4 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.content.Intent
 import android.os.Bundle

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Keep same light theme even in night mode for consistency -->
-    <style name="Base.Theme.SkillsExchange" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.Theme.SkillXchange" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/color_primary</item>
         <item name="colorSecondary">@color/color_secondary</item>
         <item name="colorTertiary">@color/color_accent_light</item>

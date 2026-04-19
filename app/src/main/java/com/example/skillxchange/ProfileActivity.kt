@@ -1,17 +1,23 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
@@ -21,9 +27,21 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var tvTagline: TextView
     private lateinit var chipGroupTeach: ChipGroup
     private lateinit var chipGroupLearn: ChipGroup
+    private lateinit var ivProfilePicture: ShapeableImageView
 
     private val teachSkills = mutableListOf("Kotlin", "Android")
     private val learnSkills = mutableListOf("UI Design", "Firebase")
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            ivProfilePicture.setImageURI(it)
+            val prefs = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
+            prefs.edit {
+                putString("profile_pic_uri", it.toString())
+            }
+            Toast.makeText(this, "Profile picture updated", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,11 +51,17 @@ class ProfileActivity : AppCompatActivity() {
         tvTagline = findViewById(R.id.tvProfileTagline)
         chipGroupTeach = findViewById(R.id.chipGroupTeach)
         chipGroupLearn = findViewById(R.id.chipGroupLearn)
+        ivProfilePicture = findViewById(R.id.ivProfilePicture)
 
-        // Load user name
+        // Load user data
         val prefs = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
-        val userName = prefs.getString("user_name", "Osama") ?: "Osama"
+        val userName = prefs.getString("user_name", "Sumaira") ?: "Sumaira"
         tvProfileName.text = userName
+
+        val savedPicUri = prefs.getString("profile_pic_uri", null)
+        if (savedPicUri != null) {
+            ivProfilePicture.setImageURI(savedPicUri.toUri())
+        }
 
         // Toolbar back
         findViewById<MaterialToolbar>(R.id.profileToolbar)
@@ -53,21 +77,40 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btnLogout).setOnClickListener {
-            prefs.edit().putBoolean("is_logged_in", false).apply()
+            prefs.edit {
+                putBoolean("is_logged_in", false)
+            }
             val intent = Intent(this, LoginActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
             startActivity(intent)
         }
 
-        // Profile photo click - COMMENTED OUT because layout ID is missing
-        // We'll add it properly once you share the layout
-        /*
-        val ivProfileAvatar = findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.ivProfileAvatar)
-        ivProfileAvatar?.setOnClickListener {
-            Toast.makeText(this, "Profile photo picker coming soon...", Toast.LENGTH_SHORT).show()
+        // Profile photo click to change
+        ivProfilePicture.setOnClickListener {
+            showChangePhotoOptions()
         }
-        */
+    }
+
+    private fun showChangePhotoOptions() {
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_change_photo, null)
+        dialog.setContentView(view)
+
+        view.findViewById<LinearLayout>(R.id.optionGallery).setOnClickListener {
+            pickImageLauncher.launch("image/*")
+            dialog.dismiss()
+        }
+
+        view.findViewById<LinearLayout>(R.id.optionRemove).setOnClickListener {
+            ivProfilePicture.setImageResource(android.R.drawable.ic_menu_gallery)
+            getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE).edit {
+                remove("profile_pic_uri")
+            }
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun renderChips(group: ChipGroup, skills: MutableList<String>, isTeach: Boolean) {
@@ -76,7 +119,7 @@ class ProfileActivity : AppCompatActivity() {
             val chip = Chip(this).apply {
                 text = skill
                 isCloseIconVisible = true
-                setChipBackgroundColorResource(if (isTeach) R.color.color_primary_light else R.color.color_secondary)
+                setChipBackgroundColorResource(if (isTeach) R.color.color_primary_dark else R.color.color_secondary)
                 setTextColor(getColor(R.color.white))
                 setCloseIconTintResource(R.color.white)
                 setOnCloseIconClickListener {
@@ -148,7 +191,9 @@ class ProfileActivity : AppCompatActivity() {
             }
             tvProfileName.text = name
             tvTagline.text = etTagline.text.toString().trim()
-            prefs.edit().putString("user_name", name).apply()
+            prefs.edit {
+                putString("user_name", name)
+            }
             dialog.dismiss()
         }
         dialog.show()

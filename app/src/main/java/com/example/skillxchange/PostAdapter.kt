@@ -1,4 +1,4 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.content.Intent
 import android.view.LayoutInflater
@@ -15,6 +15,11 @@ class PostAdapter(
     private val onAskQuestion: (Post) -> Unit
 ) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
+    // Simple in-memory cache for public questions (comments)
+    companion object {
+        val publicComments = mutableMapOf<String, MutableList<String>>()
+    }
+
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val ivAvatar: ShapeableImageView = itemView.findViewById(R.id.ivPostUserAvatar)
         val tvUserName: TextView = itemView.findViewById(R.id.tvPostUserName)
@@ -23,7 +28,7 @@ class PostAdapter(
         val tvTime: TextView = itemView.findViewById(R.id.tvPostTime)
         val btnLike: MaterialButton = itemView.findViewById(R.id.btnLike)
         val btnAskQuestion: MaterialButton = itemView.findViewById(R.id.btnAskQuestion)
-        val btnShare: MaterialButton = itemView.findViewById(R.id.btnShare)
+        val btnComments: MaterialButton = itemView.findViewById(R.id.btnComments)
         val mediaContainer: View = itemView.findViewById(R.id.postMediaContainer)
     }
 
@@ -63,33 +68,22 @@ class PostAdapter(
         // Ask Question
         holder.btnAskQuestion.setOnClickListener { onAskQuestion(post) }
 
-        // Share functionality
-        holder.btnShare.setOnClickListener {
-            val shareText = "Check out this skill post from ${post.userName} on Skills Xchange:\n\n${post.content}"
-            
-            // Choose sharing method
-            val options = arrayOf("Share to Messages (App)", "Share via External App")
-            com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
-                .setTitle("Share Post")
-                .setItems(options) { _, which ->
-                    if (which == 0) {
-                        // Internal share to Chat
-                        val intent = Intent(context, ChatListActivity::class.java)
-                        intent.putExtra("sharePostId", post.id)
-                        intent.putExtra("sharePostContent", shareText)
-                        context.startActivity(intent)
-                    } else {
-                        // System share
-                        val sendIntent: Intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, shareText)
-                            type = "text/plain"
-                        }
-                        val shareIntent = Intent.createChooser(sendIntent, "Share post via")
-                        context.startActivity(shareIntent)
-                    }
-                }
-                .show()
+        // Comments functionality
+        val comments = publicComments[post.id] ?: mutableListOf()
+        holder.btnComments.text = "Comments (${comments.size})"
+        
+        holder.btnComments.setOnClickListener {
+            val postComments = publicComments[post.id]
+            if (postComments.isNullOrEmpty()) {
+                Toast.makeText(context, "No public questions yet.", Toast.LENGTH_SHORT).show()
+            } else {
+                val commentsText = postComments.joinToString("\n\n")
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
+                    .setTitle("Public Questions")
+                    .setMessage(commentsText)
+                    .setPositiveButton("Close", null)
+                    .show()
+            }
         }
     }
 

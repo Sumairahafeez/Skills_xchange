@@ -1,4 +1,4 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.os.Bundle
 import android.widget.TextView

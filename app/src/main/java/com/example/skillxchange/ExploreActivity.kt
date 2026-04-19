@@ -1,4 +1,4 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.content.Intent
 import android.os.Bundle
@@ -15,7 +15,7 @@ class ExploreActivity : AppCompatActivity() {
     private lateinit var rvUsers: RecyclerView
     private lateinit var userAdapter: UserAdapter
     private lateinit var etSearch: TextInputEditText
-    private val allUsers = mutableListOf<User>()
+    private var allUsers = mutableListOf<User>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,14 +24,8 @@ class ExploreActivity : AppCompatActivity() {
         rvUsers = findViewById(R.id.rvExploreUsers)
         etSearch = findViewById(R.id.etSearchSkill)
 
-        allUsers.addAll(listOf(
-            User("1", "Ali Hassan", "Kotlin Developer", "Loves Android", listOf("Kotlin", "Android"), listOf("UI Design", "Figma")),
-            User("2", "Sara Khan", "UI Designer", "Creative designer", listOf("Figma", "UI Design"), listOf("Kotlin", "Firebase")),
-            User("3", "Ahmed Raza", "Backend Dev", "Firebase expert", listOf("Firebase", "Node.js"), listOf("Android", "Kotlin")),
-            User("4", "Zara Ahmed", "Data Analyst", "Python enthusiast", listOf("Python", "Excel"), listOf("Android", "UI Design")),
-            User("5", "Usman Ali", "Public Speaker", "Communication coach", listOf("Communication", "Leadership"), listOf("Python", "Firebase")),
-            User("6", "Hina Shah", "Web Developer", "React developer", listOf("React", "JavaScript"), listOf("Kotlin", "Android"))
-        ))
+        // Load users from mock database
+        allUsers = UserCache.getAllUsers(this).toMutableList()
 
         userAdapter = UserAdapter(allUsers) { user ->
             val intent = Intent(this, MatchResultActivity::class.java)
@@ -59,6 +53,10 @@ class ExploreActivity : AppCompatActivity() {
                 R.id.nav_home -> { startActivity(Intent(this, HomeActivity::class.java)); true }
                 R.id.nav_connections -> true
                 R.id.nav_create_post -> { startActivity(Intent(this, CreatePostActivity::class.java)); true }
+                R.id.nav_messages -> {
+                    startActivity(Intent(this, ChatListActivity::class.java));
+                    true
+                }
                 R.id.nav_profile -> { startActivity(Intent(this, ProfileActivity::class.java)); true }
                 else -> false
             }

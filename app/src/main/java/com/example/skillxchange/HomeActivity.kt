@@ -1,9 +1,12 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
+import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,11 +22,12 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var rvFeed: RecyclerView
     private lateinit var postAdapter: PostAdapter
+    private lateinit var currentUserId: String
 
     private val seedPosts = mutableListOf(
-        Post("1", "Alex Thompson", "Kotlin Expert", "Just finished a tutorial on Coroutines! Check it out.", "2h ago", 15, 3, false),
-        Post("2", "Sarah Jenkins", "UI Designer", "New Figma shortcuts that will save you hours.", "5h ago", 42, 10, false),
-        Post("3", "Michael Brown", "Public Speaker", "How to overcome stage fright in 5 steps.", "1d ago", 28, 5, false)
+        Post("p1", "u1", "Alex Thompson", "Kotlin Expert", "Just finished a tutorial on Coroutines! Check it out.", "2h ago", 15, 3, false),
+        Post("p2", "u2", "Sarah Jenkins", "UI Designer", "New Figma shortcuts that will save you hours.", "5h ago", 42, 10, false),
+        Post("p3", "u3", "Michael Brown", "Public Speaker", "How to overcome stage fright in 5 steps.", "1d ago", 28, 5, false)
     )
 
     private val createPostLauncher =
@@ -37,20 +41,18 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        // Initialize views
+        val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
+        currentUserId = prefs.getString("user_id", "") ?: ""
+
         rvFeed = findViewById(R.id.rvUsers)
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
-
-        // === FIXED: Top-right avatar click → Open Profile ===
-        // First give it an ID in the layout, then use it here
         val topRightAvatar = findViewById<ShapeableImageView>(R.id.ivTopRightAvatar)
 
         topRightAvatar?.setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
-        // Setup RecyclerView
         postAdapter = PostAdapter(buildFeedList()) { post ->
             showAskQuestionDialog(post)
         }
@@ -58,7 +60,6 @@ class HomeActivity : AppCompatActivity() {
         rvFeed.layoutManager = LinearLayoutManager(this)
         rvFeed.adapter = postAdapter
 
-        // Bottom Navigation
         bottomNavigation.selectedItemId = R.id.nav_home
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -83,31 +84,55 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
-        // Search functionality
         searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 filterPosts(query)
                 return true
             }
-
             override fun onQueryTextChange(newText: String?): Boolean {
                 filterPosts(newText)
                 return true
             }
         })
+        
+        updateBadges(bottomNavigation)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateBadges(findViewById(R.id.bottomNavigation))
+        refreshFeed()
+    }
+
+    private fun updateBadges(nav: BottomNavigationView) {
+        // Connection request badge
+        val invs = ConnectionCache.getInvitationsForUser(this, currentUserId)
+        if (invs.isNotEmpty()) {
+            nav.getOrCreateBadge(R.id.nav_connections).number = invs.size
+        } else {
+            nav.removeBadge(R.id.nav_connections)
+        }
+
+        // New message badge
+        if (ChatCache.hasAnyUnviewed(this, currentUserId)) {
+            nav.getOrCreateBadge(R.id.nav_messages).isVisible = true
+        } else {
+            nav.removeBadge(R.id.nav_messages)
+        }
     }
 
     private fun buildFeedList(): MutableList<Post> {
-        val combined = mutableListOf<Post>()
-        combined.addAll(CreatePostActivity.sharedPosts)
-        combined.addAll(seedPosts)
-        return combined
+        val friends = ConnectionCache.getFriendsForUser(this, currentUserId)
+        val allPosts = mutableListOf<Post>()
+        allPosts.addAll(CreatePostActivity.sharedPosts)
+        allPosts.addAll(seedPosts)
+        
+        return allPosts.filter { it.userId == currentUserId || friends.contains(it.userId) }.toMutableList()
     }
 
     private fun refreshFeed() {
         postAdapter.updatePosts(buildFeedList())
         rvFeed.scrollToPosition(0)
-        Toast.makeText(this, "Your post is live on the feed!", Toast.LENGTH_SHORT).show()
     }
 
     private fun filterPosts(query: String?) {
@@ -115,13 +140,11 @@ class HomeActivity : AppCompatActivity() {
             postAdapter.updatePosts(buildFeedList())
             return
         }
-
         val filtered = buildFeedList().filter {
             it.userName.contains(query, ignoreCase = true) ||
                     it.userTitle.contains(query, ignoreCase = true) ||
                     it.content.contains(query, ignoreCase = true)
         }.toMutableList()
-
         postAdapter.updatePosts(filtered)
     }
 
@@ -131,8 +154,9 @@ class HomeActivity : AppCompatActivity() {
         dialog.setContentView(view)
 
         view.findViewById<TextView>(R.id.tvQuestionTitle)?.text = "Ask ${post.userName} a question"
-
         val etQuestion = view.findViewById<TextInputEditText>(R.id.etQuestion)
+        val rbPublic = view.findViewById<RadioButton>(R.id.rbPublic)
+
         view.findViewById<Button>(R.id.btnSendQuestion)?.setOnClickListener {
             val questionText = etQuestion?.text?.toString()?.trim()
 
@@ -143,13 +167,22 @@ class HomeActivity : AppCompatActivity() {
 
             dialog.dismiss()
 
-            val intent = Intent(this, ChatActivity::class.java).apply {
-                putExtra("userId", post.id)
-                putExtra("userName", post.userName)
-                putExtra("userTagline", post.userTitle)
-                putExtra("prefilledQuestion", questionText)
+            if (rbPublic.isChecked) {
+                // Handle public question (Comment)
+                val comments = PostAdapter.publicComments.getOrPut(post.id) { mutableListOf() }
+                comments.add(questionText)
+                postAdapter.notifyDataSetChanged()
+                Toast.makeText(this, "Question posted publicly as a comment!", Toast.LENGTH_LONG).show()
+            } else {
+                // Handle private question (Chat)
+                val intent = Intent(this, ChatActivity::class.java).apply {
+                    putExtra("userId", post.userId)
+                    putExtra("userName", post.userName)
+                    putExtra("userTagline", post.userTitle)
+                    putExtra("prefilledQuestion", questionText)
+                }
+                startActivity(intent)
             }
-            startActivity(intent)
         }
         dialog.show()
     }

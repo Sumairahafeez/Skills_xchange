@@ -1,5 +1,6 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
@@ -22,7 +23,6 @@ class LoginActivity : AppCompatActivity() {
         val tvSignUp    = findViewById<TextView>(R.id.btnGoToSignup)
         val tvForgot    = findViewById<TextView>(R.id.tvForgotPassword)
 
-        // Show success message if coming from signup
         if (intent.getBooleanExtra("signup_success", false)) {
             Toast.makeText(this, "Account created! Please sign in.", Toast.LENGTH_LONG).show()
         }
@@ -42,25 +42,25 @@ class LoginActivity : AppCompatActivity() {
 
             if (!valid) return@setOnClickListener
 
-            val prefs         = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
-            val savedEmail    = prefs.getString("user_email", null)
-            val savedPassword = prefs.getString("user_password", null)
-            val savedName     = prefs.getString("user_name", "User")
+            val credential = CredentialCache.getCredential(this, email)
+            val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
 
             when {
-                savedEmail == null -> {
-                    // No account yet — prompt to sign up
-                    tilEmail.error = "No account found. Please sign up first."
+                credential == null -> {
+                    tilEmail.error = "No account found with this email."
                 }
-                email != savedEmail -> {
-                    tilEmail.error = "Email not recognised"
-                }
-                password != savedPassword -> {
+                credential.password != password -> {
                     tilPassword.error = "Incorrect password"
                 }
                 else -> {
-                    // Credentials match — mark user as logged in
-                    prefs.edit().putBoolean("is_logged_in", true).apply()
+                    // Success! Store the unique userId in current session
+                    prefs.edit()
+                        .putBoolean("is_logged_in", true)
+                        .putString("user_id", credential.userId)
+                        .putString("user_name", credential.name)
+                        .putString("user_email", credential.email)
+                        .apply()
+                        
                     startActivity(Intent(this, HomeActivity::class.java))
                     finish()
                 }
@@ -73,6 +73,18 @@ class LoginActivity : AppCompatActivity() {
 
         tvForgot.setOnClickListener {
             Toast.makeText(this, "Password reset link sent!", Toast.LENGTH_SHORT).show()
+        }
+        
+        tvForgot.setOnLongClickListener {
+            CredentialCache.clearData(this)
+            UserCache.clearData(this)
+            ConnectionCache.clearAllData(this)
+            
+            val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
+            prefs.edit().clear().apply()
+
+            Toast.makeText(this, "All cache history cleared!", Toast.LENGTH_LONG).show()
+            true
         }
     }
 }

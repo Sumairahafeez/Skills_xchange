@@ -1,12 +1,14 @@
-package com.example.skillsexchange
+package com.example.skillxchange
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import java.util.UUID
 
 class SignupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +41,13 @@ class SignupActivity : AppCompatActivity() {
 
             if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 tilEmail.error = "Enter a valid email address"; valid = false
-            } else { tilEmail.error = null }
+            } else { 
+                tilEmail.error = null 
+                // Check if email already exists
+                if (CredentialCache.getCredential(this, email) != null) {
+                    tilEmail.error = "Email already exists"; valid = false
+                }
+            }
 
             if (password.length < 6) {
                 tilPassword.error = "Password must be at least 6 characters"; valid = false
@@ -50,15 +58,22 @@ class SignupActivity : AppCompatActivity() {
             } else { tilConfirm.error = null }
 
             if (valid) {
-                // Persist credentials & name in SharedPreferences
-                getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
-                    .edit()
-                    .putString("user_name", name)
-                    .putString("user_email", email)
-                    .putString("user_password", password)
-                    .apply()
+                val userId = UUID.randomUUID().toString()
+                
+                // Save credential globally
+                CredentialCache.saveCredential(this, CredentialCache.Credential(userId, email, password, name))
+                
+                // Register user profile
+                val newUser = User(
+                    id = userId,
+                    name = name,
+                    tagline = "New Member",
+                    bio = "Hello! I am new here.",
+                    teachSkills = listOf("Learning"),
+                    learnSkills = listOf("Android")
+                )
+                UserCache.saveUser(this, newUser)
 
-                // Go to Login, NOT Home
                 val intent = Intent(this, LoginActivity::class.java)
                 intent.putExtra("signup_success", true)
                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
