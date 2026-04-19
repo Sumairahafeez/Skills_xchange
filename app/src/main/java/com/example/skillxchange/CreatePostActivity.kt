@@ -103,7 +103,6 @@ class CreatePostActivity : AppCompatActivity() {
             }
             
             chip.setOnCheckedChangeListener { _, isChecked ->
-                // Animation & Color change on click
                 if (isChecked) {
                     selectedTags.add(tag)
                     chip.chipBackgroundColor = ColorStateList.valueOf(getColor(R.color.color_primary))
@@ -152,7 +151,8 @@ class CreatePostActivity : AppCompatActivity() {
                     timestamp = "Just now",
                     likes     = 0,
                     comments  = 0,
-                    hasVideo  = false
+                    hasVideo  = false,
+                    imageUri  = selectedPhotoUri?.toString() // Save the photo URI
                 )
                 sharedPosts.add(0, newPost)
                 Toast.makeText(this, "Your skill post is live! 🎉", Toast.LENGTH_LONG).show()

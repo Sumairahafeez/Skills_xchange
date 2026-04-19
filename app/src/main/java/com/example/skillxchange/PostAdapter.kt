@@ -1,9 +1,11 @@
 package com.example.skillxchange
 
 import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
@@ -15,7 +17,6 @@ class PostAdapter(
     private val onAskQuestion: (Post) -> Unit
 ) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
-    // Simple in-memory cache for public questions (comments)
     companion object {
         val publicComments = mutableMapOf<String, MutableList<String>>()
     }
@@ -30,6 +31,7 @@ class PostAdapter(
         val btnAskQuestion: MaterialButton = itemView.findViewById(R.id.btnAskQuestion)
         val btnComments: MaterialButton = itemView.findViewById(R.id.btnComments)
         val mediaContainer: View = itemView.findViewById(R.id.postMediaContainer)
+        val ivPostImage: ImageView = itemView.findViewById(R.id.ivPostImage)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -45,7 +47,18 @@ class PostAdapter(
         holder.tvUserTitle.text = post.userTitle
         holder.tvContent.text = post.content
         holder.tvTime.text = post.timestamp
-        holder.mediaContainer.visibility = if (post.hasVideo) View.VISIBLE else View.GONE
+        
+        // Handle post image
+        if (!post.imageUri.isNullOrEmpty()) {
+            holder.mediaContainer.visibility = View.VISIBLE
+            try {
+                holder.ivPostImage.setImageURI(Uri.parse(post.imageUri))
+            } catch (e: Exception) {
+                holder.mediaContainer.visibility = View.GONE
+            }
+        } else {
+            holder.mediaContainer.visibility = if (post.hasVideo) View.VISIBLE else View.GONE
+        }
 
         // Like Button
         var isLiked = false
