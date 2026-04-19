@@ -31,7 +31,7 @@
                 android:id="@+id/etEditName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Osama" />
+                android:text="" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -47,7 +47,7 @@
                 android:id="@+id/etEditTagline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Android Developer | Tech Explorer" />
+                android:text="" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -66,7 +66,7 @@
                 android:gravity="top"
                 android:inputType="textMultiLine"
                 android:lines="4"
-                android:text="Passionate Android developer with 3+ years of experience in building modern mobile applications." />
+                android:text="" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
