@@ -41,10 +41,8 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
-
         val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
         currentUserId = prefs.getString("user_id", "") ?: ""
-
         rvFeed = findViewById(R.id.rvUsers)
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
