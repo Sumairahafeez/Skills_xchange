@@ -23,9 +23,13 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var rvFeed: RecyclerView
     private lateinit var postAdapter: PostAdapter
     private lateinit var currentUserId: String
+    private lateinit var bottomNavigation: BottomNavigationView
 
-    // Keep seed posts as initial content if cache is empty
-    private val seedPosts = mutableListOf(
+    private var allPosts = mutableListOf<Post>()
+    private var myFriends = setOf<String>()
+
+    // Optional: Keep seed posts as initial content if database is empty
+    private val seedPosts = listOf(
         Post("p1", "u1", "Alex Thompson", "Kotlin Expert", "Just finished a tutorial on Coroutines! Check it out.", "2h ago", 15, 3, false),
         Post("p2", "u2", "Sarah Jenkins", "UI Designer", "New Figma shortcuts that will save you hours.", "5h ago", 42, 10, false),
         Post("p3", "u3", "Michael Brown", "Public Speaker", "How to overcome stage fright in 5 steps.", "1d ago", 28, 5, false)
@@ -34,17 +38,19 @@ class HomeActivity : AppCompatActivity() {
     private val createPostLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                refreshFeed()
+                // Firebase listeners will handle the update
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+        
         val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
         currentUserId = prefs.getString("user_id", "") ?: ""
+        
         rvFeed = findViewById(R.id.rvUsers)
-        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        bottomNavigation = findViewById(R.id.bottomNavigation)
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
         val topRightAvatar = findViewById<ShapeableImageView>(R.id.ivTopRightAvatar)
 
@@ -52,7 +58,8 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
-        postAdapter = PostAdapter(buildFeedList()) { post ->
+        // Initialize adapter with empty list, will be populated by Firebase listeners
+        postAdapter = PostAdapter(mutableListOf()) { post ->
             showAskQuestionDialog(post)
         }
 
@@ -93,57 +100,66 @@ class HomeActivity : AppCompatActivity() {
                 return true
             }
         })
-        
-        updateBadges(bottomNavigation)
+
+        setupFirebaseListeners()
     }
 
-    override fun onResume() {
-        super.onResume()
-        updateBadges(findViewById(R.id.bottomNavigation))
-        refreshFeed()
-    }
-
-    private fun updateBadges(nav: BottomNavigationView) {
-        val invs = ConnectionCache.getInvitationsForUser(this, currentUserId)
-        if (invs.isNotEmpty()) {
-            nav.getOrCreateBadge(R.id.nav_connections).number = invs.size
-        } else {
-            nav.removeBadge(R.id.nav_connections)
+    private fun setupFirebaseListeners() {
+        // Listen for connection changes to update the feed and badges
+        ConnectionCache.listenToFriends(currentUserId) { friends ->
+            myFriends = friends
+            refreshFeed()
         }
 
-        if (ChatCache.hasAnyUnviewed(this, currentUserId)) {
-            nav.getOrCreateBadge(R.id.nav_messages).isVisible = true
-        } else {
-            nav.removeBadge(R.id.nav_messages)
+        // Listen for new posts from Firebase
+        PostCache.listenToPosts { posts ->
+            allPosts = posts.toMutableList()
+            refreshFeed()
+        }
+
+        // Listen for pending invitations for the connection badge
+        ConnectionCache.listenToInvitations(currentUserId) { invs ->
+            if (invs.isNotEmpty()) {
+                bottomNavigation.getOrCreateBadge(R.id.nav_connections).number = invs.size
+            } else {
+                bottomNavigation.removeBadge(R.id.nav_connections)
+            }
+        }
+
+        // Listen for unread messages for the chat badge
+        ChatCache.listenToAllUnviewed(currentUserId) { hasUnviewed ->
+            bottomNavigation.getOrCreateBadge(R.id.nav_messages).isVisible = hasUnviewed
         }
     }
 
-    private fun buildFeedList(): MutableList<Post> {
-        val friends = ConnectionCache.getFriendsForUser(this, currentUserId)
-        val allPosts = mutableListOf<Post>()
+    private fun buildDisplayList(): MutableList<Post> {
+        val displayList = mutableListOf<Post>()
         
-        // Load persistent posts from cache
-        allPosts.addAll(PostCache.getAllPosts(this))
+        // Add Firebase posts first
+        displayList.addAll(allPosts)
         
-        // Add seed posts only if they aren't already represented (optional logic)
-        // For simplicity, we'll just add them to the bottom
-        allPosts.addAll(seedPosts)
+        // Add seed posts if Firebase is empty (optional)
+        if (allPosts.isEmpty()) {
+            displayList.addAll(seedPosts)
+        }
         
-        // Filter: Show only posts from friends OR posts created by current user
-        return allPosts.filter { it.userId == currentUserId || friends.contains(it.userId) }.toMutableList()
+        // Filter: Show only posts from friends OR posts created by the current user OR seed posts
+        return displayList.filter { 
+            it.userId == currentUserId || myFriends.contains(it.userId) || it.id.startsWith("p") 
+        }.toMutableList()
     }
 
     private fun refreshFeed() {
-        postAdapter.updatePosts(buildFeedList())
-        rvFeed.scrollToPosition(0)
+        postAdapter.updatePosts(buildDisplayList())
     }
 
     private fun filterPosts(query: String?) {
+        val baseList = buildDisplayList()
         if (query.isNullOrBlank()) {
-            postAdapter.updatePosts(buildFeedList())
+            postAdapter.updatePosts(baseList)
             return
         }
-        val filtered = buildFeedList().filter {
+        val filtered = baseList.filter {
             it.userName.contains(query, ignoreCase = true) ||
                     it.userTitle.contains(query, ignoreCase = true) ||
                     it.content.contains(query, ignoreCase = true)
@@ -171,10 +187,9 @@ class HomeActivity : AppCompatActivity() {
             dialog.dismiss()
 
             if (rbPublic.isChecked) {
-                val comments = PostAdapter.publicComments.getOrPut(post.id) { mutableListOf() }
-                comments.add(questionText)
-                postAdapter.notifyDataSetChanged()
-                Toast.makeText(this, "Question posted publicly as a comment!", Toast.LENGTH_LONG).show()
+                // Synced with Firebase via PostCache
+                PostCache.addComment(post.id, questionText, post.comments)
+                Toast.makeText(this, "Question posted publicly!", Toast.LENGTH_SHORT).show()
             } else {
                 val intent = Intent(this, ChatActivity::class.java).apply {
                     putExtra("userId", post.userId)

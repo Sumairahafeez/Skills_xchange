@@ -14,6 +14,8 @@ class ChatListActivity : AppCompatActivity() {
 
     private lateinit var adapter: ChatListAdapter
     private lateinit var currentUserId: String
+    private var allUsers = listOf<User>()
+    private var friendsIds = setOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,10 +32,6 @@ class ChatListActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
         currentUserId = prefs.getString("user_id", "") ?: ""
         
-        val friendsIds = ConnectionCache.getFriendsForUser(this, currentUserId)
-        val allUsers = UserCache.getAllUsers(this)
-        val chatUsers = allUsers.filter { friendsIds.contains(it.id) }
-
         adapter = ChatListAdapter(emptyList()) { user ->
             val intent = Intent(this, ChatActivity::class.java).apply {
                 putExtra("userId", user.id)
@@ -50,33 +48,27 @@ class ChatListActivity : AppCompatActivity() {
         rvChats.layoutManager = LinearLayoutManager(this)
         rvChats.adapter = adapter
         
-        updateChatList(chatUsers)
+        setupFirebaseListeners()
+    }
 
+    private fun setupFirebaseListeners() {
         val tvEmpty = findViewById<TextView>(R.id.tvNoChats)
-        if (chatUsers.isEmpty()) {
-            tvEmpty.visibility = View.VISIBLE
-            tvEmpty.text = "No messages yet. Accept an invitation to start chatting!"
-        } else {
-            tvEmpty.visibility = View.GONE
+        
+        UserCache.listenToUsers { users ->
+            allUsers = users
+            ConnectionCache.listenToFriends(currentUserId) { friends ->
+                friendsIds = friends
+                val chatUsers = allUsers.filter { friendsIds.contains(it.id) }
+                
+                adapter.updateList(chatUsers)
+                
+                if (chatUsers.isEmpty()) {
+                    tvEmpty.visibility = View.VISIBLE
+                    tvEmpty.text = "No messages yet. Accept an invitation to start chatting!"
+                } else {
+                    tvEmpty.visibility = View.GONE
+                }
+            }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val friendsIds = ConnectionCache.getFriendsForUser(this, currentUserId)
-        val allUsers = UserCache.getAllUsers(this)
-        val chatUsers = allUsers.filter { friendsIds.contains(it.id) }
-        updateChatList(chatUsers)
-    }
-
-    private fun updateChatList(users: List<User>) {
-        val context = this
-        // Sort users by the timestamp of the last message in descending order
-        val sortedUsers = users.sortedByDescending { user ->
-            ChatCache.load(context, currentUserId, user.id).lastOrNull()?.timestamp ?: 0L
-        }
-        adapter.updateList(sortedUsers)
     }
 }
-
-// Update ChatListAdapter as well to include updateList method

@@ -41,13 +41,7 @@ class SignupActivity : AppCompatActivity() {
 
             if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 tilEmail.error = "Enter a valid email address"; valid = false
-            } else { 
-                tilEmail.error = null 
-                // Check if email already exists
-                if (CredentialCache.getCredential(this, email) != null) {
-                    tilEmail.error = "Email already exists"; valid = false
-                }
-            }
+            } else { tilEmail.error = null }
 
             if (password.length < 6) {
                 tilPassword.error = "Password must be at least 6 characters"; valid = false
@@ -57,28 +51,36 @@ class SignupActivity : AppCompatActivity() {
                 tilConfirm.error = "Passwords do not match"; valid = false
             } else { tilConfirm.error = null }
 
-            if (valid) {
-                val userId = UUID.randomUUID().toString()
-                
-                // Save credential globally
-                CredentialCache.saveCredential(this, CredentialCache.Credential(userId, email, password, name))
-                
-                // Register user profile
-                val newUser = User(
-                    id = userId,
-                    name = name,
-                    tagline = "New Member",
-                    bio = "Hello! I am new here.",
-                    teachSkills = listOf("Learning"),
-                    learnSkills = listOf("Android")
-                )
-                UserCache.saveUser(this, newUser)
+            if (!valid) return@setOnClickListener
 
-                val intent = Intent(this, LoginActivity::class.java)
-                intent.putExtra("signup_success", true)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                startActivity(intent)
-                finish()
+            btnSignup.isEnabled = false
+            CredentialCache.getCredential(this, email) { existingCred ->
+                if (existingCred != null) {
+                    tilEmail.error = "Email already exists"
+                    btnSignup.isEnabled = true
+                } else {
+                    val userId = UUID.randomUUID().toString()
+                    
+                    // Save credential globally
+                    CredentialCache.saveCredential(this, CredentialCache.Credential(userId, email, password, name))
+                    
+                    // Register user profile
+                    val newUser = User(
+                        id = userId,
+                        name = name,
+                        tagline = "New Member",
+                        bio = "Hello! I am new here.",
+                        teachSkills = listOf("Learning"),
+                        learnSkills = listOf("Android")
+                    )
+                    UserCache.saveUser(this, newUser)
+
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.putExtra("signup_success", true)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    startActivity(intent)
+                    finish()
+                }
             }
         }
 

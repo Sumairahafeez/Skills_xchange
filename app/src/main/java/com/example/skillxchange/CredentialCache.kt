@@ -1,66 +1,50 @@
 package com.example.skillxchange
 
 import android.content.Context
-import org.json.JSONArray
-import org.json.JSONObject
+import com.google.firebase.database.*
 
 object CredentialCache {
-    private const val PREFS_NAME = "credential_storage"
-    private const val KEY_CREDENTIALS = "user_credentials"
+    private val database = FirebaseDatabase.getInstance().getReference("credentials")
+    private var cachedCredentials = mutableListOf<Credential>()
 
-    data class Credential(val userId: String, val email: String, val password: String, val name: String)
+    data class Credential(val userId: String = "", val email: String = "", val password: String = "", val name: String = "")
 
-    fun saveCredential(context: Context, cred: Credential) {
-        val creds = getAllCredentials(context).toMutableList()
-        if (creds.none { it.email == cred.email }) {
-            creds.add(cred)
-            persistCredentials(context, creds)
-        }
+    init {
+        database.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = mutableListOf<Credential>()
+                for (child in snapshot.children) {
+                    child.getValue(Credential::class.java)?.let { list.add(it) }
+                }
+                cachedCredentials = list
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
 
-    private fun persistCredentials(context: Context, creds: List<Credential>) {
-        val array = JSONArray()
-        for (c in creds) {
-            val obj = JSONObject()
-            obj.put("userId", c.userId)
-            obj.put("email", c.email)
-            obj.put("password", c.password)
-            obj.put("name", c.name)
-            array.put(obj)
-        }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_CREDENTIALS, array.toString())
-            .apply()
+    fun saveCredential(context: Context, cred: Credential) {
+        // Use encoded email as key because Firebase keys can't contain '.'
+        val encodedEmail = cred.email.replace(".", ",")
+        database.child(encodedEmail).setValue(cred)
     }
 
     fun getAllCredentials(context: Context): List<Credential> {
-        val json = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_CREDENTIALS, null) ?: return emptyList()
-        val list = mutableListOf<Credential>()
-        try {
-            val array = JSONArray(json)
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                // Use optString to avoid JSONException if a key is missing
-                list.add(Credential(
-                    obj.optString("userId", "unknown"),
-                    obj.optString("email", ""),
-                    obj.optString("password", ""),
-                    obj.optString("name", "")
-                ))
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return list
+        return cachedCredentials
     }
 
-    fun getCredential(context: Context, email: String): Credential? {
-        return getAllCredentials(context).find { it.email == email }
+    fun getCredential(context: Context, email: String, callback: (Credential?) -> Unit) {
+        val encodedEmail = email.replace(".", ",")
+        database.child(encodedEmail).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                callback(snapshot.getValue(Credential::class.java))
+            }
+            override fun onCancelled(error: DatabaseError) {
+                callback(null)
+            }
+        })
     }
 
     fun clearData(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply()
+        // Global data, usually not cleared from client like this
     }
 }

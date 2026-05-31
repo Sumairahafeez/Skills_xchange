@@ -1,88 +1,99 @@
 package com.example.skillxchange
 
 import android.content.Context
-import org.json.JSONArray
-import org.json.JSONObject
+import com.google.firebase.database.*
 
 object ChatCache {
+    private val database = FirebaseDatabase.getInstance().getReference("chats")
+    private val viewedDatabase = FirebaseDatabase.getInstance().getReference("viewed_status")
+    
+    private val lastMessages = mutableMapOf<String, ChatMessage>()
+    private val viewedStatus = mutableMapOf<String, Boolean>()
 
     private fun chatKey(currentUserId: String, otherUserId: String): String {
         val sortedIds = listOf(currentUserId, otherUserId).sorted()
-        return "chat_${sortedIds[0]}_${sortedIds[1]}"
+        return "${sortedIds[0]}_${sortedIds[1]}"
     }
 
-    private fun viewedKey(myId: String, otherId: String): String {
-        return "viewed_${myId}_with_${otherId}"
-    }
-
-    private const val PREFS_VIEWED = "chat_viewed_status"
-
-    fun save(context: Context, currentUserId: String, otherUserId: String, messages: List<ChatMessage>) {
-        val array = JSONArray()
-        for (msg in messages) {
-            val obj = JSONObject()
-            obj.put("text", msg.text)
-            obj.put("senderId", msg.senderId)
-            obj.put("timestamp", msg.timestamp)
-            if (msg.sharedPostId != null) {
-                obj.put("sharedPostId", msg.sharedPostId)
+    init {
+        // Global listener to keep track of last messages for the list view
+        database.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (chatSnapshot in snapshot.children) {
+                    val lastMsg = chatSnapshot.children.lastOrNull()?.getValue(ChatMessage::class.java)
+                    if (lastMsg != null) {
+                        lastMessages[chatSnapshot.key!!] = lastMsg
+                    }
+                }
             }
-            array.put(obj)
-        }
-        context.getSharedPreferences("chat_cache", Context.MODE_PRIVATE)
-            .edit()
-            .putString(chatKey(currentUserId, otherUserId), array.toString())
-            .apply()
-
-        // When saving a message, mark it as unviewed for the RECIPIENT
-        // In this local mock, if 'currentUserId' is sending, 'otherUserId' is receiving.
-        if (messages.isNotEmpty() && messages.last().senderId == currentUserId) {
-            markViewed(context, otherUserId, currentUserId, false)
-        }
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
 
-    fun load(context: Context, currentUserId: String, otherUserId: String): MutableList<ChatMessage> {
-        val prefs = context.getSharedPreferences("chat_cache", Context.MODE_PRIVATE)
-        val json = prefs.getString(chatKey(currentUserId, otherUserId), null) ?: return mutableListOf()
-        val list = mutableListOf<ChatMessage>()
-        try {
-            val array = JSONArray(json)
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                list.add(
-                    ChatMessage(
-                        text = obj.getString("text"),
-                        senderId = obj.optString("senderId", ""),
-                        timestamp = obj.getLong("timestamp"),
-                        sharedPostId = if (obj.has("sharedPostId")) obj.getString("sharedPostId") else null
-                    )
-                )
+    fun save(context: Context, currentUserId: String, otherUserId: String, message: ChatMessage) {
+        val key = chatKey(currentUserId, otherUserId)
+        database.child(key).push().setValue(message)
+        markViewed(otherUserId, currentUserId, false)
+    }
+
+    fun listenToMessages(currentUserId: String, otherUserId: String, callback: (List<ChatMessage>) -> Unit) {
+        val key = chatKey(currentUserId, otherUserId)
+        database.child(key).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = mutableListOf<ChatMessage>()
+                for (child in snapshot.children) {
+                    child.getValue(ChatMessage::class.java)?.let { list.add(it) }
+                }
+                callback(list)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return list
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
 
-    fun markViewed(context: Context, myId: String, otherId: String, viewed: Boolean) {
-        context.getSharedPreferences(PREFS_VIEWED, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(viewedKey(myId, otherId), viewed)
-            .apply()
+    fun markViewed(myId: String, otherId: String, viewed: Boolean) {
+        viewedDatabase.child(myId).child(otherId).setValue(viewed)
+    }
+
+    // Compatibility methods for synchronous calls in Adapters
+    fun load(context: Context, currentUserId: String, otherUserId: String): List<ChatMessage> {
+        val key = chatKey(currentUserId, otherUserId)
+        val last = lastMessages[key]
+        return if (last != null) listOf(last) else emptyList()
     }
 
     fun isViewed(context: Context, myId: String, otherId: String): Boolean {
-        return context.getSharedPreferences(PREFS_VIEWED, Context.MODE_PRIVATE)
-            .getBoolean(viewedKey(myId, otherId), true)
+        return viewedStatus["${myId}_${otherId}"] ?: true
+    }
+
+    fun markViewed(context: Context, myId: String, otherId: String, viewed: Boolean) {
+        markViewed(myId, otherId, viewed)
+    }
+
+    fun listenToAllUnviewed(myId: String, callback: (Boolean) -> Unit) {
+        viewedDatabase.child(myId).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                var hasUnviewed = false
+                for (child in snapshot.children) {
+                    val isViewed = child.getValue(Boolean::class.java) ?: true
+                    viewedStatus["${myId}_${child.key}"] = isViewed
+                    if (!isViewed) hasUnviewed = true
+                }
+                callback(hasUnviewed)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    fun listenToViewedStatus(myId: String, otherId: String, callback: (Boolean) -> Unit) {
+        viewedDatabase.child(myId).child(otherId).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val status = snapshot.getValue(Boolean::class.java) ?: true
+                viewedStatus["${myId}_${otherId}"] = status
+                callback(status)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
     
-    fun hasAnyUnviewed(context: Context, myId: String): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_VIEWED, Context.MODE_PRIVATE)
-        val all = prefs.all
-        val prefix = "viewed_${myId}_with_"
-        for (entry in all) {
-            if (entry.key.startsWith(prefix) && entry.value == false) return true
-        }
-        return false
-    }
+    fun hasAnyUnviewed(context: Context, myId: String): Boolean = false
 }

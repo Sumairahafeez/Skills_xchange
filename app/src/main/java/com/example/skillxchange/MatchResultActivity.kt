@@ -1,5 +1,6 @@
 package com.example.skillxchange
 
+import android.content.Context
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -19,27 +20,32 @@ class MatchResultActivity : AppCompatActivity() {
 
         toolbar.setNavigationOnClickListener { finish() }
 
-        val userName = intent.getStringExtra("userName") ?: "someone"
-        tvMatchTitle.text = "People matching with $userName"
+        val targetUserId = intent.getStringExtra("userId")
+        val targetUserName = intent.getStringExtra("userName") ?: "someone"
+        
+        tvMatchTitle.text = "People matching with $targetUserName"
 
-        val myLearnSkills = listOf("Kotlin", "Firebase", "Android")
-        val myTeachSkills = listOf("UI Design", "Figma")
+        val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
+        val currentUserId = prefs.getString("user_id", "") ?: ""
 
-        val allUsers = mutableListOf(
-            User("1", "Ali Hassan", "Kotlin Dev", "", listOf("Kotlin", "Android"), listOf("UI Design")),
-            User("2", "Sara Khan", "UI Designer", "", listOf("Figma", "UI Design"), listOf("Kotlin", "Firebase")),
-            User("3", "Ahmed Raza", "Backend Dev", "", listOf("Firebase", "Node.js"), listOf("Android")),
-            User("4", "Zara Ahmed", "Data Analyst", "", listOf("Python", "Excel"), listOf("Android")),
-            User("5", "Usman Ali", "Speaker", "", listOf("Communication"), listOf("Firebase"))
-        )
+        // Load users from UserCache which is now synced with Firebase
+        UserCache.listenToUsers { allUsers ->
+            val targetUser = allUsers.find { it.id == (targetUserId ?: currentUserId) }
+            
+            if (targetUser != null) {
+                val matches = allUsers.filter { user ->
+                    user.id != targetUser.id && (
+                        user.teachSkills.any { it in targetUser.learnSkills } ||
+                        user.learnSkills.any { it in targetUser.teachSkills }
+                    )
+                }
 
-        val matches = allUsers.filter { user ->
-            user.teachSkills.any { it in myLearnSkills } ||
-                    user.learnSkills.any { it in myTeachSkills }
+                val adapter = UserAdapter(matches.toMutableList()) { selectedUser ->
+                    // Handle click if needed
+                }
+                rvMatches.layoutManager = LinearLayoutManager(this)
+                rvMatches.adapter = adapter
+            }
         }
-
-        val adapter = UserAdapter(matches.toMutableList()) { }
-        rvMatches.layoutManager = LinearLayoutManager(this)
-        rvMatches.adapter = adapter
     }
 }

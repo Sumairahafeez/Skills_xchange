@@ -24,9 +24,6 @@ class ExploreActivity : AppCompatActivity() {
         rvUsers = findViewById(R.id.rvExploreUsers)
         etSearch = findViewById(R.id.etSearchSkill)
 
-        // Load users from mock database
-        allUsers = UserCache.getAllUsers(this).toMutableList()
-
         userAdapter = UserAdapter(allUsers) { user ->
             val intent = Intent(this, MatchResultActivity::class.java)
             intent.putExtra("userId", user.id)
@@ -50,7 +47,7 @@ class ExploreActivity : AppCompatActivity() {
         bottomNavigation.selectedItemId = R.id.nav_connections
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> { startActivity(Intent(this, HomeActivity::class.java)); true }
+                R.id.nav_home -> { startActivity(Intent(this, HomeActivity::class.java)); finish(); true }
                 R.id.nav_connections -> true
                 R.id.nav_create_post -> { startActivity(Intent(this, CreatePostActivity::class.java)); true }
                 R.id.nav_messages -> {
@@ -60,6 +57,15 @@ class ExploreActivity : AppCompatActivity() {
                 R.id.nav_profile -> { startActivity(Intent(this, ProfileActivity::class.java)); true }
                 else -> false
             }
+        }
+
+        setupFirebaseListener()
+    }
+
+    private fun setupFirebaseListener() {
+        UserCache.listenToUsers { users ->
+            allUsers = users.toMutableList()
+            filterUsers(etSearch.text.toString())
         }
     }
 

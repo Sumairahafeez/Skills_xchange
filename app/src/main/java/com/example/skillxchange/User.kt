@@ -7,5 +7,6 @@ data class User(
     val bio: String = "",
     val teachSkills: List<String> = emptyList(),
     val learnSkills: List<String> = emptyList(),
-    val rating: Double = 4.5
+    val rating: Double = 4.5,
+    val profilePicUri: String? = null
 )

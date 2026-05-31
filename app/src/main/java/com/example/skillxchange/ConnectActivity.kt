@@ -36,18 +36,10 @@ class ConnectActivity : AppCompatActivity() {
         val tvInvitationsCount = findViewById<TextView>(R.id.tvInvitationsCount)
         val layoutInvitations = findViewById<LinearLayout>(R.id.layoutInvitations)
 
-        invitations = ConnectionCache.getInvitationsForUser(this, currentUserId).toMutableList()
-        updateInvitationHeader(tvInvitationsCount)
-        
-        layoutInvitations.visibility = if (invitations.isEmpty()) View.GONE else View.VISIBLE
-
         invitationAdapter = InvitationAdapter(invitations, 
             onAccept = { invitation ->
                 Toast.makeText(this, "Accepted invitation from ${invitation.name}", Toast.LENGTH_SHORT).show()
                 ConnectionCache.acceptConnection(this, currentUserId, invitation.id)
-                ConnectionCache.removeInvitation(this, currentUserId, invitation.id)
-                
-                refreshInvitations(tvInvitationsCount, layoutInvitations)
                 
                 val intent = Intent(this, ChatActivity::class.java).apply {
                     putExtra("userId", invitation.id)
@@ -57,36 +49,32 @@ class ConnectActivity : AppCompatActivity() {
             },
             onDecline = { invitation, position ->
                 ConnectionCache.removeInvitation(this, currentUserId, invitation.id)
-                invitations.removeAt(position)
-                invitationAdapter.notifyItemRemoved(position)
-                updateInvitationHeader(tvInvitationsCount)
-                if (invitations.isEmpty()) {
-                    layoutInvitations.visibility = View.GONE
-                }
             }
         )
         rvInvitations.layoutManager = LinearLayoutManager(this)
         rvInvitations.adapter = invitationAdapter
 
-        val rvSuggestions = findViewById<RecyclerView>(R.id.rvSuggestions)
-        val allUsers = UserCache.getAllUsers(this)
-        val friends = ConnectionCache.getFriendsForUser(this, currentUserId)
-        
-        // Filter: Not me, and not already friends
-        val suggestions = allUsers.filter { it.id != currentUserId && !friends.contains(it.id) }
+        setupFirebaseListeners(tvInvitationsCount, layoutInvitations)
 
-        rvSuggestions.layoutManager = GridLayoutManager(this, 2)
-        rvSuggestions.adapter = SuggestionAdapter(suggestions) { user ->
-            // Send invitation TO the other user FROM me
-            val currentUserData = UserCache.getAllUsers(this).find { it.id == currentUserId }
-            val newInv = Invitation(
-                id = currentUserId, 
-                name = currentUserName, 
-                title = currentUserData?.tagline ?: "Member", 
-                reason = "Wants to connect"
-            )
-            ConnectionCache.sendInvitation(this, user.id, newInv)
-            Toast.makeText(this, "Connection request sent to ${user.name}", Toast.LENGTH_SHORT).show()
+        val rvSuggestions = findViewById<RecyclerView>(R.id.rvSuggestions)
+        
+        // Listen to both users and friends to build suggestions
+        UserCache.listenToUsers { allUsers ->
+            ConnectionCache.listenToFriends(currentUserId) { friends ->
+                val suggestions = allUsers.filter { it.id != currentUserId && !friends.contains(it.id) }
+                rvSuggestions.layoutManager = GridLayoutManager(this, 2)
+                rvSuggestions.adapter = SuggestionAdapter(suggestions) { user ->
+                    val currentUserData = allUsers.find { it.id == currentUserId }
+                    val newInv = Invitation(
+                        id = currentUserId, 
+                        name = currentUserName, 
+                        title = currentUserData?.tagline ?: "Member", 
+                        reason = "Wants to connect"
+                    )
+                    ConnectionCache.sendInvitation(this, user.id, newInv)
+                    Toast.makeText(this, "Connection request sent to ${user.name}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
 
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigationNetwork)
@@ -103,22 +91,13 @@ class ConnectActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        val tvInvitationsCount = findViewById<TextView>(R.id.tvInvitationsCount)
-        val layoutInvitations = findViewById<LinearLayout>(R.id.layoutInvitations)
-        refreshInvitations(tvInvitationsCount, layoutInvitations)
-    }
-
-    private fun refreshInvitations(tvCount: TextView, layout: View) {
-        invitations.clear()
-        invitations.addAll(ConnectionCache.getInvitationsForUser(this, currentUserId))
-        invitationAdapter.notifyDataSetChanged()
-        updateInvitationHeader(tvCount)
-        layout.visibility = if (invitations.isEmpty()) View.GONE else View.VISIBLE
-    }
-
-    private fun updateInvitationHeader(tvCount: TextView) {
-        tvCount.text = "Invitations (${invitations.size})"
+    private fun setupFirebaseListeners(tvCount: TextView, layout: View) {
+        ConnectionCache.listenToInvitations(currentUserId) { invs ->
+            invitations.clear()
+            invitations.addAll(invs)
+            invitationAdapter.notifyDataSetChanged()
+            tvCount.text = "Invitations (${invs.size})"
+            layout.visibility = if (invs.isEmpty()) View.GONE else View.VISIBLE
+        }
     }
 }

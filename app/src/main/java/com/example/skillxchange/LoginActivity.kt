@@ -42,27 +42,29 @@ class LoginActivity : AppCompatActivity() {
 
             if (!valid) return@setOnClickListener
 
-            val credential = CredentialCache.getCredential(this, email)
-            val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
+            btnLogin.isEnabled = false
+            CredentialCache.getCredential(this, email) { credential ->
+                btnLogin.isEnabled = true
+                val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
 
-            when {
-                credential == null -> {
-                    tilEmail.error = "No account found with this email."
-                }
-                credential.password != password -> {
-                    tilPassword.error = "Incorrect password"
-                }
-                else -> {
-                    // Success! Store the unique userId in current session
-                    prefs.edit()
-                        .putBoolean("is_logged_in", true)
-                        .putString("user_id", credential.userId)
-                        .putString("user_name", credential.name)
-                        .putString("user_email", credential.email)
-                        .apply()
-                        
-                    startActivity(Intent(this, HomeActivity::class.java))
-                    finish()
+                when {
+                    credential == null -> {
+                        tilEmail.error = "No account found with this email."
+                    }
+                    credential.password != password -> {
+                        tilPassword.error = "Incorrect password"
+                    }
+                    else -> {
+                        prefs.edit()
+                            .putBoolean("is_logged_in", true)
+                            .putString("user_id", credential.userId)
+                            .putString("user_name", credential.name)
+                            .putString("user_email", credential.email)
+                            .apply()
+                            
+                        startActivity(Intent(this, HomeActivity::class.java))
+                        finish()
+                    }
                 }
             }
         }
@@ -76,14 +78,12 @@ class LoginActivity : AppCompatActivity() {
         }
         
         tvForgot.setOnLongClickListener {
-            CredentialCache.clearData(this)
-            UserCache.clearData(this)
-            ConnectionCache.clearAllData(this)
-            
+            // Note: Firebase clearData usually doesn't make sense for global data,
+            // but we clear the local prefs.
             val prefs = getSharedPreferences("skillsxchange_prefs", Context.MODE_PRIVATE)
             prefs.edit().clear().apply()
 
-            Toast.makeText(this, "All cache history cleared!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Local session cleared!", Toast.LENGTH_LONG).show()
             true
         }
     }

@@ -1,6 +1,5 @@
 package com.example.skillxchange
 
-import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
@@ -16,10 +15,6 @@ class PostAdapter(
     private val postList: MutableList<Post>,
     private val onAskQuestion: (Post) -> Unit
 ) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
-
-    companion object {
-        val publicComments = mutableMapOf<String, MutableList<String>>()
-    }
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val ivAvatar: ShapeableImageView = itemView.findViewById(R.id.ivPostUserAvatar)
@@ -60,42 +55,32 @@ class PostAdapter(
             holder.mediaContainer.visibility = if (post.hasVideo) View.VISIBLE else View.GONE
         }
 
-        // Like Button
-        var isLiked = false
-        var likeCount = post.likes
-        holder.btnLike.text = "Like (${likeCount})"
+        // Like Button - Synced with Firebase
+        holder.btnLike.text = "Like (${post.likes})"
         holder.btnLike.setOnClickListener {
-            isLiked = !isLiked
-            if (isLiked) {
-                likeCount++
-                holder.btnLike.setIconResource(android.R.drawable.btn_star_big_on)
-                holder.btnLike.setIconTintResource(R.color.color_primary)
-            } else {
-                likeCount--
-                holder.btnLike.setIconResource(android.R.drawable.btn_star_big_off)
-                holder.btnLike.setIconTintResource(R.color.color_text_secondary)
-            }
-            holder.btnLike.text = "Like (${likeCount})"
+            // Toggle like logic: here we assume a simple increment for demo.
+            // In a real app, you'd track if the specific user has liked it.
+            PostCache.toggleLike(post.id, post.likes, true)
         }
 
         // Ask Question
         holder.btnAskQuestion.setOnClickListener { onAskQuestion(post) }
 
-        // Comments functionality
-        val comments = publicComments[post.id] ?: mutableListOf()
-        holder.btnComments.text = "Comments (${comments.size})"
+        // Comments functionality - Synced with Firebase
+        holder.btnComments.text = "Comments (${post.comments})"
         
         holder.btnComments.setOnClickListener {
-            val postComments = publicComments[post.id]
-            if (postComments.isNullOrEmpty()) {
-                Toast.makeText(context, "No public questions yet.", Toast.LENGTH_SHORT).show()
-            } else {
-                val commentsText = postComments.joinToString("\n\n")
-                com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
-                    .setTitle("Public Questions")
-                    .setMessage(commentsText)
-                    .setPositiveButton("Close", null)
-                    .show()
+            PostCache.listenToComments(post.id) { commentsList ->
+                if (commentsList.isEmpty()) {
+                    Toast.makeText(context, "No public questions yet.", Toast.LENGTH_SHORT).show()
+                } else {
+                    val commentsText = commentsList.joinToString("\n\n")
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
+                        .setTitle("Public Questions")
+                        .setMessage(commentsText)
+                        .setPositiveButton("Close", null)
+                        .show()
+                }
             }
         }
     }
