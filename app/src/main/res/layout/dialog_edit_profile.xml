@@ -30,8 +30,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etEditName"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -46,8 +45,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etEditTagline"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -65,8 +63,23 @@
                 android:layout_height="wrap_content"
                 android:gravity="top"
                 android:inputType="textMultiLine"
-                android:lines="4"
-                android:text="" />
+                android:lines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEditSkills"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Skills (comma or # separated)"
+            app:helperText="e.g. Kotlin, Java, #Firebase"
+            app:boxStrokeColor="@color/color_primary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEditSkills"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton

@@ -1,270 +1,403 @@
 package com.example.skillxchange
+
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
-import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
-import androidx.core.net.toUri
+import com.bumptech.glide.Glide
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
+import com.example.skillxchange.model.User
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.imageview.ShapeableImageView
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
-import org.json.JSONArray
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 
 class ProfileActivity : AppCompatActivity() {
 
-    private lateinit var tvProfileName: TextView
-    private lateinit var tvTagline: TextView
-    private lateinit var tvProfileBio: TextView
-    private lateinit var chipGroupTeach: ChipGroup
-    private lateinit var chipGroupLearn: ChipGroup
-    private lateinit var ivProfilePicture: ShapeableImageView
-    private lateinit var tvPostsCount: TextView
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
-    private var teachSkills = mutableListOf<String>()
-    private var learnSkills = mutableListOf<String>()
-    
-    private var isOwnProfile = true
+    private lateinit var ivProfile: ShapeableImageView
+    private lateinit var tvName: TextView
+    private lateinit var tvTagline: TextView
+    private lateinit var tvConnections: TextView
+    private lateinit var tvProfileViews: TextView
+    private lateinit var tvBio: TextView
+    private lateinit var chipGroupSkills: ChipGroup
+    private lateinit var btnEdit: MaterialButton
+    private lateinit var btnLogout: MaterialButton
+    private lateinit var layoutStats: View
+    private lateinit var containerViews: View
+
+    private var displayedUser: User? = null
     private var targetUserId: String? = null
+    private var currentUserId: String = ""
+
+    private val photoPickerLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) { uploadProfileImage(uri) }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
-        tvProfileName = findViewById(R.id.tvProfileNameDetail)
+        CloudinaryConfig.initialize(this)
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
+        currentUserId = auth.currentUser?.uid ?: ""
+
+        targetUserId = intent.getStringExtra("userId") ?: currentUserId
+
+        val toolbar = findViewById<MaterialToolbar>(R.id.profileToolbar)
+        setSupportActionBar(toolbar)
+        toolbar.setNavigationOnClickListener { finish() }
+
+        ivProfile = findViewById(R.id.ivProfilePicture)
+        tvName = findViewById(R.id.tvProfileNameDetail)
         tvTagline = findViewById(R.id.tvProfileTagline)
-        tvProfileBio = findViewById(R.id.tvProfileBio)
-        chipGroupTeach = findViewById(R.id.chipGroupTeach)
-        chipGroupLearn = findViewById(R.id.chipGroupLearn)
-        ivProfilePicture = findViewById(R.id.ivProfilePicture)
-        tvPostsCount = findViewById(R.id.tvLessonsCount)
+        tvConnections = findViewById(R.id.tvConnectionsCount)
+        tvProfileViews = findViewById(R.id.tvProfileViews)
+        tvBio = findViewById(R.id.tvProfileBio)
+        chipGroupSkills = findViewById(R.id.chipGroupSkills)
+        btnEdit = findViewById(R.id.btnEditProfile)
+        btnLogout = findViewById(R.id.btnLogout)
+        layoutStats = findViewById(R.id.layoutStats)
+        containerViews = findViewById(R.id.containerViews)
 
-        val prefs = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
-        val currentUserId = prefs.getString("user_id", "") ?: ""
-        
-        targetUserId = intent.getStringExtra("userId")
-        isOwnProfile = targetUserId == null || targetUserId == currentUserId
-
-        if (isOwnProfile) {
-            setupOwnProfile(prefs, currentUserId)
+        if (targetUserId != currentUserId) {
+            btnLogout.visibility = View.GONE
+            // Hide private stats area when viewing others
+            layoutStats.visibility = View.GONE
+            trackProfileView()
+            checkConnectionStatus()
         } else {
-            setupOtherProfile(targetUserId!!, currentUserId)
-        }
-
-        findViewById<MaterialToolbar>(R.id.profileToolbar)
-            .setNavigationOnClickListener { finish() }
-
-        // Logout logic
-        findViewById<Button>(R.id.btnLogout).setOnClickListener {
-            prefs.edit(commit = true) {
-                // We clear everything EXCEPT the "registered_users" in user_storage 
-                // but wait, prefs here is "skillsxchange_prefs".
-                // UserCache uses "user_storage". So clearing this is fine.
-                clear()
+            layoutStats.visibility = View.VISIBLE
+            btnEdit.setOnClickListener { showEditDialog() }
+            btnLogout.setOnClickListener { logout() }
+            ivProfile.setOnClickListener {
+                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
+            
+            // Navigate to viewers list
+            containerViews.setOnClickListener {
+                startActivity(Intent(this, ProfileViewersActivity::class.java))
+            }
+        }
+
+        loadUserData()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        if (targetUserId == currentUserId) {
+            menuInflater.inflate(R.menu.profile_menu, menu)
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                showSettingsBottomSheet()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
-    private fun setupOwnProfile(prefs: android.content.SharedPreferences, userId: String) {
-        // Load from UserCache to be sure
-        val user = UserCache.getAllUsers(this).find { it.id == userId }
-        
-        val userName = user?.name ?: prefs.getString("user_name", "User") ?: "User"
-        val userTagline = user?.tagline ?: prefs.getString("user_tagline", "Your tagline here") ?: "Your tagline here"
-        val userBio = user?.bio ?: prefs.getString("user_bio", "Add your bio by tapping Edit Profile below.") ?: "Add your bio by tapping Edit Profile below."
-        
-        tvProfileName.text = userName
-        tvTagline.text = userTagline
-        tvProfileBio.text = userBio
+    private fun showSettingsBottomSheet() {
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_settings, null)
+        dialog.setContentView(view)
 
-        teachSkills = user?.teachSkills?.toMutableList() ?: loadSkills(prefs, "teach_skills", mutableListOf("Kotlin", "Android"))
-        learnSkills = user?.learnSkills?.toMutableList() ?: loadSkills(prefs, "learn_skills", mutableListOf("UI Design", "Firebase"))
-
-        val savedPicUri = prefs.getString("profile_pic_uri", null)
-        if (savedPicUri != null) {
-            try { ivProfilePicture.setImageURI(savedPicUri.toUri()) } catch (e: Exception) {}
+        view.findViewById<View>(R.id.btnViewers)?.setOnClickListener {
+            dialog.dismiss()
+            startActivity(Intent(this, ProfileViewersActivity::class.java))
         }
 
-        renderChips(chipGroupTeach, teachSkills, isTeach = true)
-        renderChips(chipGroupLearn, learnSkills, isTeach = false)
-
-        val btnEdit = findViewById<Button>(R.id.btnEditProfile)
-        btnEdit.text = "Edit Profile"
-        btnEdit.setOnClickListener { showEditProfileDialog(userId) }
-
-        ivProfilePicture.setOnClickListener(null)
-        ivProfilePicture.isClickable = false
-        
-        val allPosts = PostCache.getAllPosts(this)
-        val myPosts = allPosts.filter { it.userId == userId }
-        tvPostsCount.text = myPosts.size.toString()
-        findViewById<TextView>(R.id.tvLessonsLabel).text = "Posts"
-    }
-
-    private fun setupOtherProfile(otherId: String, myId: String) {
-        val user = UserCache.getAllUsers(this).find { it.id == otherId } ?: return
-        
-        tvProfileName.text = user.name
-        tvTagline.text = user.tagline
-        tvProfileBio.text = user.bio
-        
-        teachSkills = user.teachSkills.toMutableList()
-        learnSkills = user.learnSkills.toMutableList()
-        
-        renderChips(chipGroupTeach, teachSkills, isTeach = true, canEdit = false)
-        renderChips(chipGroupLearn, learnSkills, isTeach = false, canEdit = false)
-        
-        val btnConnect = findViewById<Button>(R.id.btnEditProfile)
-        btnConnect.text = "Connect"
-        btnConnect.setOnClickListener {
-            val myName = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE).getString("user_name", "Someone") ?: "Someone"
-            val inv = Invitation(myId, myName, "Professional", "Wants to connect")
-            ConnectionCache.sendInvitation(this, otherId, inv)
-            Toast.makeText(this, "Connection request sent to ${user.name}", Toast.LENGTH_SHORT).show()
-            btnConnect.isEnabled = false
-            btnConnect.text = "Requested"
+        view.findViewById<View>(R.id.btnSettingsSignOut)?.setOnClickListener {
+            dialog.dismiss()
+            logout()
         }
-        
-        findViewById<Button>(R.id.btnLogout).visibility = View.GONE
-        
-        val allPosts = PostCache.getAllPosts(this)
-        val userPosts = allPosts.filter { it.userId == otherId }
-        tvPostsCount.text = userPosts.size.toString()
-        findViewById<TextView>(R.id.tvLessonsLabel).text = "Posts"
+        dialog.show()
     }
 
-    private fun loadSkills(prefs: android.content.SharedPreferences, key: String, default: MutableList<String>): MutableList<String> {
-        val json = prefs.getString(key, null) ?: return default
-        val list = mutableListOf<String>()
-        try {
-            val array = JSONArray(json)
-            for (i in 0 until array.length()) list.add(array.getString(i))
-        } catch (e: Exception) { return default }
-        return list
+    private fun trackProfileView() {
+        val targetId = targetUserId ?: return
+        if (targetId == currentUserId) return
+
+        val userRef = db.collection("users").document(targetId)
+        userRef.update("viewedBy", FieldValue.arrayUnion(currentUserId))
+            .addOnFailureListener {
+                userRef.set(mapOf("viewedBy" to listOf(currentUserId)), SetOptions.merge())
+            }
+        
+        // Notify the user
+        db.collection("users").document(currentUserId).get().addOnSuccessListener { doc ->
+            if (isFinishing || isDestroyed) return@addOnSuccessListener
+            val me = doc.toObject(User::class.java)
+            NotificationHelper.createNotification(
+                toUserId = targetId,
+                fromUserId = currentUserId,
+                fromUserName = me?.name ?: auth.currentUser?.displayName ?: "Someone",
+                fromUserProfileUrl = me?.photoUrl ?: "",
+                message = "viewed your profile",
+                type = "PROFILE_VIEW",
+                relatedId = currentUserId
+            )
+        }
     }
 
-    private fun renderChips(group: ChipGroup, skills: MutableList<String>, isTeach: Boolean, canEdit: Boolean = true) {
-        group.removeAllViews()
-        val prefs = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
-        val userId = prefs.getString("user_id", "") ?: ""
+    private fun checkConnectionStatus() {
+        val targetId = targetUserId ?: return
+        val connectionId = if (currentUserId < targetId) "${currentUserId}_${targetId}" else "${targetId}_${currentUserId}"
         
+        db.collection("connections").document(connectionId).addSnapshotListener { snapshot, _ ->
+            if (isFinishing || isDestroyed) return@addSnapshotListener
+            if (snapshot != null && snapshot.exists()) {
+                val status = snapshot.getString("status")
+                val senderId = snapshot.getString("requestSenderId")
+                
+                btnEdit.visibility = View.VISIBLE
+                btnEdit.isEnabled = true
+                
+                when (status) {
+                    "accepted" -> {
+                        btnEdit.text = "Message"
+                        btnEdit.setOnClickListener {
+                            val intent = Intent(this@ProfileActivity, ChatActivity::class.java).apply {
+                                putExtra("userId", targetId)
+                                putExtra("userName", displayedUser?.name ?: "Chat")
+                            }
+                            startActivity(intent)
+                        }
+                    }
+                    "pending" -> {
+                        if (senderId == currentUserId) {
+                            btnEdit.text = "Pending"
+                            btnEdit.isEnabled = false
+                            btnEdit.setOnClickListener(null)
+                        } else {
+                            btnEdit.text = "Accept Request"
+                            btnEdit.setOnClickListener { handleAccept() }
+                        }
+                    }
+                    else -> {
+                        btnEdit.text = "Connect"
+                        btnEdit.setOnClickListener { handleConnect() }
+                    }
+                }
+            } else {
+                btnEdit.visibility = View.VISIBLE
+                btnEdit.text = "Connect"
+                btnEdit.setOnClickListener { handleConnect() }
+            }
+        }
+    }
+
+    private fun handleConnect() {
+        val targetId = targetUserId ?: return
+        val connectionId = if (currentUserId < targetId) "${currentUserId}_${targetId}" else "${targetId}_${currentUserId}"
+        val data = mapOf(
+            "id" to connectionId,
+            "users" to listOf(currentUserId, targetId),
+            "status" to "pending",
+            "requestSenderId" to currentUserId,
+            "updatedAt" to FieldValue.serverTimestamp()
+        )
+        db.collection("connections").document(connectionId).set(data, SetOptions.merge()).addOnSuccessListener {
+            if (!isFinishing && !isDestroyed) {
+                Toast.makeText(this, "Request sent!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun handleAccept() {
+        val targetId = targetUserId ?: return
+        val connectionId = if (currentUserId < targetId) "${currentUserId}_${targetId}" else "${targetId}_${currentUserId}"
+        
+        db.runBatch { batch ->
+            // Update connection status
+            batch.update(db.collection("connections").document(connectionId),
+                mapOf("status" to "accepted", "updatedAt" to FieldValue.serverTimestamp()))
+            
+            // Mutual connection update
+            batch.set(db.collection("users").document(currentUserId),
+                mapOf("connections" to FieldValue.arrayUnion(targetId)), SetOptions.merge())
+            batch.set(db.collection("users").document(targetId),
+                mapOf("connections" to FieldValue.arrayUnion(currentUserId)), SetOptions.merge())
+        }.addOnSuccessListener {
+            if (!isFinishing && !isDestroyed) {
+                Toast.makeText(this, "Connected successfully!", Toast.LENGTH_SHORT).show()
+                
+                db.collection("users").document(currentUserId).get().addOnSuccessListener { doc ->
+                    if (isFinishing || isDestroyed) return@addOnSuccessListener
+                    val me = doc.toObject(User::class.java)
+                    NotificationHelper.createNotification(
+                        toUserId = targetId,
+                        fromUserId = currentUserId,
+                        fromUserName = me?.name ?: auth.currentUser?.displayName ?: "Someone",
+                        fromUserProfileUrl = me?.photoUrl ?: "",
+                        message = "accepted your connection request",
+                        type = "CONNECTION_ACCEPT",
+                        relatedId = connectionId
+                    )
+                }
+            }
+        }.addOnFailureListener { e ->
+            if (!isFinishing && !isDestroyed) {
+                Toast.makeText(this, "Failed to connect: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun loadUserData() {
+        val uid = targetUserId ?: return
+        db.collection("users").document(uid).addSnapshotListener { snapshot, e ->
+            if (isFinishing || isDestroyed || e != null || snapshot == null) return@addSnapshotListener
+            
+            displayedUser = snapshot.toObject(User::class.java)
+            displayedUser?.let { user ->
+                tvName.text = user.name.ifEmpty { "Member" }
+                tvTagline.text = user.tagline.ifEmpty { "SkillXchange Explorer" }
+                tvBio.text = user.bio.ifEmpty { "Passionate about skill sharing." }
+                tvConnections.text = user.connections.size.toString()
+                tvProfileViews.text = user.viewedBy.size.toString()
+                
+                if (!isFinishing && !isDestroyed) {
+                    Glide.with(this)
+                        .load(user.photoUrl)
+                        .placeholder(R.drawable.ic_user_placeholder)
+                        .into(ivProfile)
+                }
+                
+                displaySkills(user.skills)
+            }
+        }
+    }
+
+    private fun displaySkills(skills: List<String>) {
+        chipGroupSkills.removeAllViews()
         for (skill in skills) {
             val chip = Chip(this).apply {
                 text = skill
-                isCloseIconVisible = canEdit
-                setChipBackgroundColorResource(if (isTeach) R.color.color_primary_dark else R.color.color_secondary)
-                setTextColor(resources.getColor(R.color.white, null))
-                setCloseIconTintResource(R.color.white)
-                if (canEdit) {
-                    setOnCloseIconClickListener {
-                        skills.remove(skill)
-                        updateSkillsInCache(userId, skills, isTeach)
-                        renderChips(group, skills, isTeach, canEdit)
+                setChipBackgroundColorResource(android.R.color.white)
+            }
+            chipGroupSkills.addView(chip)
+        }
+    }
+
+    private fun logout() {
+        auth.signOut()
+        Toast.makeText(this, "Signed out successfully", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+
+    private fun showEditDialog() {
+        if (displayedUser == null) return
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
+        dialog.setContentView(view)
+
+        val etName = view.findViewById<EditText>(R.id.etEditName)
+        val etTagline = view.findViewById<EditText>(R.id.etEditTagline)
+        val etBio = view.findViewById<EditText>(R.id.etEditBio)
+        val etSkills = view.findViewById<EditText>(R.id.etEditSkills)
+        val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveProfile)
+
+        etName?.setText(displayedUser?.name)
+        etTagline?.setText(displayedUser?.tagline)
+        etBio?.setText(displayedUser?.bio)
+        etSkills?.setText(displayedUser?.skills?.joinToString(", "))
+
+        btnSave?.setOnClickListener {
+            val nameStr = etName?.text?.toString()?.trim() ?: ""
+            val skillsInput = etSkills?.text?.toString()?.trim() ?: ""
+            val skillsList = if (skillsInput.isEmpty()) emptyList() else skillsInput.split(Regex("[,#]")).map { it.trim().removePrefix("#") }.filter { it.isNotEmpty() }
+
+            if (nameStr.isNotEmpty()) {
+                val updates = mapOf(
+                    "name" to nameStr,
+                    "tagline" to etTagline?.text?.toString()?.trim(),
+                    "bio" to etBio?.text?.toString()?.trim(),
+                    "skills" to skillsList
+                )
+                db.collection("users").document(currentUserId).update(updates).addOnSuccessListener {
+                    if (!isFinishing && !isDestroyed) {
+                        Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
                     }
                 }
             }
-            group.addView(chip)
-        }
-
-        if (canEdit) {
-            val addChip = Chip(this).apply {
-                text = "+ Add skill"
-                setChipBackgroundColorResource(R.color.color_background_soft)
-                setTextColor(resources.getColor(R.color.color_primary, null))
-                setOnClickListener { showAddSkillDialog(userId, skills, group, isTeach) }
-            }
-            group.addView(addChip)
-        }
-    }
-
-    private fun updateSkillsInCache(userId: String, skills: List<String>, isTeach: Boolean) {
-        val user = UserCache.getAllUsers(this).find { it.id == userId } ?: return
-        val updatedUser = if (isTeach) user.copy(teachSkills = skills) else user.copy(learnSkills = skills)
-        UserCache.saveUser(this, updatedUser)
-        
-        // Also update legacy prefs for now
-        val key = if (isTeach) "teach_skills" else "learn_skills"
-        getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE).edit().putString(key, JSONArray(skills).toString()).apply()
-    }
-
-    private fun showAddSkillDialog(userId: String, skills: MutableList<String>, group: ChipGroup, isTeach: Boolean) {
-        val dialog = BottomSheetDialog(this)
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
-        dialog.setContentView(view)
-
-        val etSkill = view.findViewById<TextInputEditText>(R.id.etEditName)
-        view.findViewById<TextInputLayout>(R.id.tilEditName).hint = "Enter skill name"
-        view.findViewById<TextInputLayout>(R.id.tilEditTagline)?.visibility = View.GONE
-        view.findViewById<TextInputLayout>(R.id.tilEditBio)?.visibility = View.GONE
-
-        view.findViewById<Button>(R.id.btnSaveProfile).apply {
-            text = "Add Skill"
-            setOnClickListener {
-                val skill = etSkill.text.toString().trim()
-                if (skill.isNotEmpty() && !skills.contains(skill)) {
-                    skills.add(skill)
-                    updateSkillsInCache(userId, skills, isTeach)
-                    renderChips(group, skills, isTeach)
-                    dialog.dismiss()
-                }
-            }
         }
         dialog.show()
     }
 
-    private fun showEditProfileDialog(userId: String) {
-        val dialog = BottomSheetDialog(this)
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_profile, null)
-        dialog.setContentView(view)
+    private fun uploadProfileImage(uri: Uri) {
+        val uid = currentUserId
+        if (uid.isEmpty()) return
 
-        val etName = view.findViewById<TextInputEditText>(R.id.etEditName)
-        val etTagline = view.findViewById<TextInputEditText>(R.id.etEditTagline)
-        val etBio = view.findViewById<TextInputEditText>(R.id.etEditBio)
+        Toast.makeText(this, "Updating profile picture...", Toast.LENGTH_SHORT).show()
 
-        etName.setText(tvProfileName.text)
-        etTagline.setText(tvTagline.text)
-        etBio.setText(tvProfileBio.text)
-
-        view.findViewById<Button>(R.id.btnSaveProfile).setOnClickListener {
-            val name = etName.text.toString().trim()
-            val tag = etTagline.text.toString().trim()
-            val bio = etBio.text.toString().trim()
-
-            if (name.isNotEmpty()) {
-                tvProfileName.text = name
-                tvTagline.text = tag
-                tvProfileBio.text = bio
-
-                // Update Local Cache
-                val user = UserCache.getAllUsers(this).find { it.id == userId }
-                if (user != null) {
-                    val updatedUser = user.copy(name = name, tagline = tag, bio = bio)
-                    UserCache.saveUser(this, updatedUser)
+        MediaManager.get().upload(uri).unsigned("ml_default").callback(object : UploadCallback {
+            override fun onStart(requestId: String) {}
+            override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {}
+            override fun onSuccess(requestId: String, resultData: Map<*, *>) {
+                val url = resultData["secure_url"] as String
+                runOnUiThread {
+                    if (!isFinishing && !isDestroyed) {
+                        db.collection("users").document(uid).update("photoUrl", url)
+                            .addOnSuccessListener {
+                                if (!isFinishing && !isDestroyed) {
+                                    Toast.makeText(this@ProfileActivity, "Profile picture updated!", Toast.LENGTH_SHORT).show()
+                                    updateAllMyPostsPhoto(url)
+                                }
+                            }
+                    }
                 }
-
-                // Update Prefs for session
-                getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE).edit {
-                    putString("user_name", name)
-                    putString("user_tagline", tag)
-                    putString("user_bio", bio)
-                    apply()
-                }
-                
-                dialog.dismiss()
-                Toast.makeText(this, "Profile Updated", Toast.LENGTH_SHORT).show()
             }
-        }
-        dialog.show()
+            override fun onError(requestId: String, error: ErrorInfo) {
+                runOnUiThread {
+                    if (!isFinishing && !isDestroyed) {
+                        Toast.makeText(this@ProfileActivity, "Upload failed", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            override fun onReschedule(requestId: String, error: ErrorInfo) {}
+        }).dispatch()
+    }
+
+    private fun updateAllMyPostsPhoto(newUrl: String) {
+        db.collection("posts")
+            .whereEqualTo("userId", currentUserId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot != null) {
+                    db.runBatch { batch ->
+                        for (doc in snapshot.documents) {
+                            batch.update(doc.reference, "userPhotoUrl", newUrl)
+                        }
+                    }
+                }
+            }
     }
 }

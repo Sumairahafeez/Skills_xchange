@@ -7,9 +7,10 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.skillxchange.model.Message
 
 class ChatAdapter(
-    private val messages: List<ChatMessage>,
+    private val messages: List<Message>,
     private val currentUserId: String
 ) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
 
@@ -28,20 +29,17 @@ class ChatAdapter(
         holder.tvMessage.text = message.text
         
         val isMe = message.senderId == currentUserId
-        val params = holder.tvMessage.layoutParams as LinearLayout.LayoutParams
         
+        // Simple bubble styling
         if (isMe) {
             holder.container.gravity = Gravity.END
             holder.tvMessage.setBackgroundResource(R.drawable.bg_bubble_sent)
             holder.tvMessage.setTextColor(android.graphics.Color.WHITE)
-            params.gravity = Gravity.END
         } else {
             holder.container.gravity = Gravity.START
             holder.tvMessage.setBackgroundResource(R.drawable.bg_bubble_received)
             holder.tvMessage.setTextColor(android.graphics.Color.BLACK)
-            params.gravity = Gravity.START
         }
-        holder.tvMessage.layoutParams = params
     }
 
     override fun getItemCount(): Int = messages.size

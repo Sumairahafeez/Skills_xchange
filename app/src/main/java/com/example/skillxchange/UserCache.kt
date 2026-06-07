@@ -1,26 +1,31 @@
 package com.example.skillxchange
 
 import android.content.Context
+import com.example.skillxchange.model.User
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Local cache for user profiles.
+ * Used for storing temporary data or providing mock data for tests.
+ */
 object UserCache {
     private const val PREFS_NAME = "user_storage"
     private const val KEY_USERS = "registered_users"
 
     private val defaultUsers = listOf(
-        User("1", "Ali Hassan", "Kotlin Developer", "Loves Android", listOf("Kotlin", "Android"), listOf("UI Design", "Figma")),
-        User("2", "Sara Khan", "UI Designer", "Creative designer", listOf("Figma", "UI Design"), listOf("Kotlin", "Firebase")),
-        User("3", "Ahmed Raza", "Backend Dev", "Firebase expert", listOf("Firebase", "Node.js"), listOf("Android", "Kotlin")),
-        User("4", "Zara Ahmed", "Data Analyst", "Python enthusiast", listOf("Python", "Excel"), listOf("Android", "UI Design")),
-        User("5", "Usman Ali", "Public Speaker", "Communication coach", listOf("Communication", "Leadership"), listOf("Python", "Firebase")),
-        User("6", "Hina Shah", "Web Developer", "React developer", listOf("React", "JavaScript"), listOf("Kotlin", "Android")),
-        User("7", "John Lee", "Full Stack Developer", "Node.js & React", listOf("React"), listOf("DevOps"))
+        User(uid = "user_1", name = "Ali Hassan", tagline = "Kotlin Developer", bio = "Loves Android", teachSkills = listOf("Kotlin", "Android"), learnSkills = listOf("UI Design", "Figma")),
+        User(uid = "user_2", name = "Sara Khan", tagline = "UI Designer", bio = "Creative designer", teachSkills = listOf("Figma", "UI Design"), learnSkills = listOf("Kotlin", "Firebase")),
+        User(uid = "user_3", name = "Ahmed Raza", tagline = "Backend Dev", bio = "Firebase expert", teachSkills = listOf("Firebase", "Node.js"), learnSkills = listOf("Android", "Kotlin")),
+        User(uid = "user_4", name = "Zara Ahmed", tagline = "Data Analyst", bio = "Python enthusiast", teachSkills = listOf("Python", "Excel"), learnSkills = listOf("Android", "UI Design")),
+        User(uid = "user_5", name = "Usman Ali", tagline = "Public Speaker", bio = "Communication coach", teachSkills = listOf("Communication", "Leadership"), learnSkills = listOf("Python", "Firebase")),
+        User(uid = "user_6", name = "Hina Shah", tagline = "Web Developer", bio = "React developer", teachSkills = listOf("React", "JavaScript"), learnSkills = listOf("Kotlin", "Android")),
+        User(uid = "user_7", name = "John Lee", tagline = "Full Stack Developer", bio = "Node.js & React", teachSkills = listOf("React"), learnSkills = listOf("DevOps"))
     )
 
     fun saveUser(context: Context, user: User) {
         val users = getAllUsers(context).toMutableList()
-        val index = users.indexOfFirst { it.id == user.id }
+        val index = users.indexOfFirst { it.uid == user.uid }
         if (index != -1) {
             users[index] = user
         } else {
@@ -33,7 +38,7 @@ object UserCache {
         val array = JSONArray()
         for (u in users) {
             val obj = JSONObject()
-            obj.put("id", u.id)
+            obj.put("uid", u.uid)
             obj.put("name", u.name)
             obj.put("tagline", u.tagline)
             obj.put("bio", u.bio)
@@ -76,7 +81,7 @@ object UserCache {
                 }
 
                 list.add(User(
-                    id = obj.optString("id", ""),
+                    uid = obj.optString("uid", ""),
                     name = obj.optString("name", "Unknown"),
                     tagline = obj.optString("tagline", ""),
                     bio = obj.optString("bio", ""),

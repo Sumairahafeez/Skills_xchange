@@ -7,6 +7,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.example.skillxchange.model.User
 import com.google.android.material.button.MaterialButton
 
 class SuggestionAdapter(

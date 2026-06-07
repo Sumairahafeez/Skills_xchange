@@ -1,187 +1,171 @@
 package com.example.skillxchange
 
-import android.app.Activity
-import android.content.Intent
-import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.view.animation.AnimationUtils
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
+import com.example.skillxchange.model.User
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
 
 class CreatePostActivity : AppCompatActivity() {
 
-    private val selectedTags   = mutableListOf<String>()
-    private var selectedPhotoUri: Uri? = null
-    private var selectedTagline = ""
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
-    private val taglineOptions = arrayOf(
-        "Skills Exchange Member",
-        "Kotlin Developer 🚀",
-        "UI/UX Designer ✨",
-        "Data Scientist 📊",
-        "Public Speaker 🎤",
-        "Full Stack Developer 💻",
-        "Machine Learning Enthusiast 🤖",
-        "Mobile App Developer 📱",
-        "Open Source Contributor 🌐",
-        "Entrepreneur & Mentor 💡"
-    )
+    private var selectedImageUri: Uri? = null
+    private var currentUser: User? = null
+    private val selectedTags = mutableListOf<String>()
 
-    private val photoPickerLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    try {
-                        contentResolver.takePersistableUriPermission(
-                            uri,
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        )
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                    selectedPhotoUri = uri
-                    showPhotoPreview(uri)
-                }
-            }
+    private lateinit var ivPhotoPreview: android.widget.ImageView
+    private lateinit var cardPhotoPreview: MaterialCardView
+    private lateinit var btnAddPhoto: MaterialButton
+    private lateinit var chipGroupSkillTags: ChipGroup
+    private lateinit var btnSubmit: MaterialButton
+
+    private val photoPickerLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            selectedImageUri = uri
+            ivPhotoPreview.setImageURI(uri)
+            cardPhotoPreview.visibility = View.VISIBLE
+            btnAddPhoto.text = "Change Photo"
         }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_post)
 
-        val prefs    = getSharedPreferences("skillsxchange_prefs", MODE_PRIVATE)
-        val currentUserId = prefs.getString("user_id", "") ?: ""
-        val userName = prefs.getString("user_name", "You") ?: "You"
-        val initial  = userName.firstOrNull()?.uppercaseChar()?.toString() ?: "Y"
+        CloudinaryConfig.initialize(this)
 
-        findViewById<TextView>(R.id.tvAuthorName).text    = userName
-        findViewById<TextView>(R.id.tvAuthorInitial).text = initial
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         val toolbar = findViewById<MaterialToolbar>(R.id.createPostToolbar)
         toolbar.setNavigationOnClickListener { finish() }
 
-        val tilTitle   = findViewById<TextInputLayout>(R.id.tilPostTitle)
-        val etTitle    = findViewById<TextInputEditText>(R.id.etPostTitle)
-        val tilContent = findViewById<TextInputLayout>(R.id.tilPostContent)
-        val etContent  = findViewById<TextInputEditText>(R.id.etPostContent)
-        val chipGroup  = findViewById<ChipGroup>(R.id.chipGroupSkillTags)
-        val btnPost    = findViewById<MaterialButton>(R.id.btnSubmitPost)
-        val btnPhoto   = findViewById<MaterialButton>(R.id.btnAddPhoto)
-        val tvTagline  = findViewById<TextView>(R.id.tvAuthorTagline)
+        ivPhotoPreview = findViewById(R.id.ivPhotoPreview)
+        cardPhotoPreview = findViewById(R.id.cardPhotoPreview)
+        btnAddPhoto = findViewById(R.id.btnAddPhoto)
+        chipGroupSkillTags = findViewById(R.id.chipGroupSkillTags)
+        val etContent = findViewById<TextInputEditText>(R.id.etPostContent)
+        btnSubmit = findViewById(R.id.btnSubmitPost)
+        val fabRemovePhoto = findViewById<View>(R.id.fabRemovePhoto)
 
-        tvTagline.setOnClickListener {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Select your tagline")
-                .setItems(taglineOptions) { _, which ->
-                    selectedTagline = taglineOptions[which]
-                    tvTagline.text = selectedTagline
-                }
-                .show()
+        fetchUserProfile()
+        setupTagSuggestions()
+
+        btnAddPhoto.setOnClickListener {
+            photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
-        val skillTags = listOf("Kotlin", "Design", "Public Speaking", "Python",
-            "UI/UX", "Leadership", "Marketing", "Data Science")
-            
-        skillTags.forEach { tag ->
-            val chip = Chip(this).apply {
-                text = tag
-                isCheckable = true
-                setChipBackgroundColorResource(R.color.color_background_soft)
-                setTextColor(getColor(R.color.color_accent))
-                chipStrokeWidth = 2f
-                setChipStrokeColorResource(R.color.color_primary_light)
-            }
-            
-            chip.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    selectedTags.add(tag)
-                    chip.chipBackgroundColor = ColorStateList.valueOf(getColor(R.color.color_primary))
-                    chip.setTextColor(getColor(R.color.white))
-                    chip.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in))
-                } else {
-                    selectedTags.remove(tag)
-                    chip.chipBackgroundColor = ColorStateList.valueOf(getColor(R.color.color_background_soft))
-                    chip.setTextColor(getColor(R.color.color_accent))
-                }
-            }
-            chipGroup.addView(chip)
+        fabRemovePhoto.setOnClickListener {
+            selectedImageUri = null
+            cardPhotoPreview.visibility = View.GONE
+            btnAddPhoto.text = "Add Photo"
         }
 
-        btnPhoto.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "image/*"
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-            }
-            photoPickerLauncher.launch(intent)
-        }
-
-        findViewById<View>(R.id.fabRemovePhoto).setOnClickListener {
-            selectedPhotoUri = null
-            hidePhotoPreview()
-        }
-
-        btnPost.setOnClickListener {
-            val title   = etTitle.text.toString().trim()
+        btnSubmit.setOnClickListener {
             val content = etContent.text.toString().trim()
-            var valid   = true
+            if (content.isEmpty()) {
+                Toast.makeText(this, "Please enter some content", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            btnSubmit.isEnabled = false
+            uploadPost(content)
+        }
+    }
 
-            if (title.isEmpty()) { tilTitle.error = "Please add a title"; valid = false }
-            else { tilTitle.error = null }
+    private fun fetchUserProfile() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                currentUser = document.toObject(User::class.java)
+                findViewById<TextView>(R.id.tvAuthorName).text = currentUser?.name ?: auth.currentUser?.displayName ?: "User"
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load profile", Toast.LENGTH_SHORT).show()
+                findViewById<TextView>(R.id.tvAuthorName).text = auth.currentUser?.displayName ?: "User"
+            }
+    }
 
-            if (content.isEmpty()) { tilContent.error = "Please write something to share"; valid = false }
-            else { tilContent.error = null }
+    private fun setupTagSuggestions() {
+        val commonSkills = listOf("Kotlin", "Android", "Firebase", "UI Design", "Figma", "Python", "React")
+        for (skill in commonSkills) {
+            val chip = Chip(this).apply {
+                text = skill
+                isCheckable = true
+                setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) selectedTags.add(skill) else selectedTags.remove(skill)
+                }
+            }
+            chipGroupSkillTags.addView(chip)
+        }
+    }
 
-            if (valid) {
-                val tagSuffix  = if (selectedTags.isNotEmpty()) "\n\nTags: ${selectedTags.joinToString(", ")}" else ""
-                val userTitle  = selectedTagline.ifEmpty { "Skills Exchange Member" }
-                val newPost    = Post(
-                    id        = UUID.randomUUID().toString(),
-                    userId    = currentUserId,
-                    userName  = userName,
-                    userTitle = userTitle,
-                    content   = "$title\n\n$content$tagSuffix",
-                    timestamp = "Just now",
-                    likes     = 0,
-                    comments  = 0,
-                    hasVideo  = false,
-                    imageUri  = selectedPhotoUri?.toString()
-                )
-                
-                // Save post persistently
-                PostCache.savePost(this, newPost)
+    private fun uploadPost(content: String) {
+        val postId = UUID.randomUUID().toString()
+        val uid = auth.currentUser?.uid ?: return
 
-                Toast.makeText(this, "Your skill post is live! 🎉", Toast.LENGTH_LONG).show()
-                setResult(RESULT_OK)
+        if (selectedImageUri != null) {
+            MediaManager.get().upload(selectedImageUri)
+                .unsigned("ml_default")
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String) {}
+                    override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {}
+                    override fun onSuccess(requestId: String, resultData: Map<*, *>) {
+                        val imageUrl = resultData["secure_url"] as String
+                        savePostToFirestore(postId, uid, content, imageUrl)
+                    }
+                    override fun onError(requestId: String, error: ErrorInfo) {
+                        Toast.makeText(this@CreatePostActivity, "Upload failed: ${error.description}", Toast.LENGTH_SHORT).show()
+                        btnSubmit.isEnabled = true
+                    }
+                    override fun onReschedule(requestId: String, error: ErrorInfo) {}
+                }).dispatch()
+        } else {
+            savePostToFirestore(postId, uid, content, null)
+        }
+    }
+
+    private fun savePostToFirestore(postId: String, uid: String, content: String, imageUrl: String?) {
+        val post = Post(
+            id = postId,
+            userId = uid,
+            userName = currentUser?.name ?: auth.currentUser?.displayName ?: "Unknown",
+            userTitle = currentUser?.tagline ?: "Member",
+            userPhotoUrl = currentUser?.photoUrl ?: "",
+            content = content,
+            imageUrl = imageUrl,
+            likedBy = emptyList(),
+            commentsCount = 0,
+            tags = selectedTags
+        )
+
+        db.collection("posts").document(postId)
+            .set(post)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Post created successfully!", Toast.LENGTH_SHORT).show()
                 finish()
             }
-        }
-    }
-
-    private fun showPhotoPreview(uri: Uri) {
-        val card = findViewById<MaterialCardView>(R.id.cardPhotoPreview)
-        val iv   = findViewById<android.widget.ImageView>(R.id.ivPhotoPreview)
-        iv.setImageURI(uri)
-        card.visibility = View.VISIBLE
-        findViewById<MaterialButton>(R.id.btnAddPhoto).text = "📷  Change Photo"
-    }
-
-    private fun hidePhotoPreview() {
-        findViewById<MaterialCardView>(R.id.cardPhotoPreview).visibility = View.GONE
-        findViewById<MaterialButton>(R.id.btnAddPhoto).text = "📷  Add Photo"
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to save post: ${it.message}", Toast.LENGTH_SHORT).show()
+                btnSubmit.isEnabled = true
+            }
     }
 }

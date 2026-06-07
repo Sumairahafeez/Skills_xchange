@@ -1,14 +1,21 @@
 package com.example.skillxchange
 
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.ServerTimestamp
+
 data class Post(
     val id: String = "",
     val userId: String = "",
     val userName: String = "",
     val userTitle: String = "",
+    val userPhotoUrl: String = "",
     val content: String = "",
-    val timestamp: String = "",
-    val likes: Int = 0,
-    val comments: Int = 0,
-    val hasVideo: Boolean = false,
-    val imageUri: String? = null // New field to store the image URI
-)
+    val imageUrl: String? = null,
+    @ServerTimestamp
+    val timestamp: Timestamp? = null,
+    val likedBy: List<String> = emptyList(),
+    val commentsCount: Int = 0,
+    val tags: List<String> = emptyList()
+) {
+    val likesCount: Int get() = likedBy.size
+}
