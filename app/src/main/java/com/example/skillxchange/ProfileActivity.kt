@@ -40,7 +40,11 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var tvConnections: TextView
     private lateinit var tvProfileViews: TextView
     private lateinit var tvBio: TextView
-    private lateinit var chipGroupSkills: ChipGroup
+
+    // Split into distinct UI groups matching your teaching vs learning lists
+    private lateinit var chipGroupSkillsOffering: ChipGroup
+    private lateinit var chipGroupSkillsSeeking: ChipGroup
+
     private lateinit var btnEdit: MaterialButton
     private lateinit var btnLogout: MaterialButton
     private lateinit var layoutStats: View
@@ -75,7 +79,11 @@ class ProfileActivity : AppCompatActivity() {
         tvConnections = findViewById(R.id.tvConnectionsCount)
         tvProfileViews = findViewById(R.id.tvProfileViews)
         tvBio = findViewById(R.id.tvProfileBio)
-        chipGroupSkills = findViewById(R.id.chipGroupSkills)
+
+        // Map elements to your dual xml configurations
+        chipGroupSkillsOffering = findViewById(R.id.chipGroupSkills)
+        chipGroupSkillsSeeking = findViewById(R.id.chipGroupSkillsSeeking)
+
         btnEdit = findViewById(R.id.btnEditProfile)
         btnLogout = findViewById(R.id.btnLogout)
         layoutStats = findViewById(R.id.layoutStats)
@@ -83,7 +91,6 @@ class ProfileActivity : AppCompatActivity() {
 
         if (targetUserId != currentUserId) {
             btnLogout.visibility = View.GONE
-            // Hide private stats area when viewing others
             layoutStats.visibility = View.GONE
             trackProfileView()
             checkConnectionStatus()
@@ -94,8 +101,7 @@ class ProfileActivity : AppCompatActivity() {
             ivProfile.setOnClickListener {
                 photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
-            
-            // Navigate to viewers list
+
             containerViews.setOnClickListener {
                 startActivity(Intent(this, ProfileViewersActivity::class.java))
             }
@@ -147,8 +153,7 @@ class ProfileActivity : AppCompatActivity() {
             .addOnFailureListener {
                 userRef.set(mapOf("viewedBy" to listOf(currentUserId)), SetOptions.merge())
             }
-        
-        // Notify the user
+
         db.collection("users").document(currentUserId).get().addOnSuccessListener { doc ->
             if (isFinishing || isDestroyed) return@addOnSuccessListener
             val me = doc.toObject(User::class.java)
@@ -167,16 +172,16 @@ class ProfileActivity : AppCompatActivity() {
     private fun checkConnectionStatus() {
         val targetId = targetUserId ?: return
         val connectionId = if (currentUserId < targetId) "${currentUserId}_${targetId}" else "${targetId}_${currentUserId}"
-        
+
         db.collection("connections").document(connectionId).addSnapshotListener { snapshot, _ ->
             if (isFinishing || isDestroyed) return@addSnapshotListener
             if (snapshot != null && snapshot.exists()) {
                 val status = snapshot.getString("status")
                 val senderId = snapshot.getString("requestSenderId")
-                
+
                 btnEdit.visibility = View.VISIBLE
                 btnEdit.isEnabled = true
-                
+
                 when (status) {
                     "accepted" -> {
                         btnEdit.text = "Message"
@@ -231,13 +236,11 @@ class ProfileActivity : AppCompatActivity() {
     private fun handleAccept() {
         val targetId = targetUserId ?: return
         val connectionId = if (currentUserId < targetId) "${currentUserId}_${targetId}" else "${targetId}_${currentUserId}"
-        
+
         db.runBatch { batch ->
-            // Update connection status
             batch.update(db.collection("connections").document(connectionId),
                 mapOf("status" to "accepted", "updatedAt" to FieldValue.serverTimestamp()))
-            
-            // Mutual connection update
+
             batch.set(db.collection("users").document(currentUserId),
                 mapOf("connections" to FieldValue.arrayUnion(targetId)), SetOptions.merge())
             batch.set(db.collection("users").document(targetId),
@@ -245,7 +248,7 @@ class ProfileActivity : AppCompatActivity() {
         }.addOnSuccessListener {
             if (!isFinishing && !isDestroyed) {
                 Toast.makeText(this, "Connected successfully!", Toast.LENGTH_SHORT).show()
-                
+
                 db.collection("users").document(currentUserId).get().addOnSuccessListener { doc ->
                     if (isFinishing || isDestroyed) return@addOnSuccessListener
                     val me = doc.toObject(User::class.java)
@@ -271,7 +274,7 @@ class ProfileActivity : AppCompatActivity() {
         val uid = targetUserId ?: return
         db.collection("users").document(uid).addSnapshotListener { snapshot, e ->
             if (isFinishing || isDestroyed || e != null || snapshot == null) return@addSnapshotListener
-            
+
             displayedUser = snapshot.toObject(User::class.java)
             displayedUser?.let { user ->
                 tvName.text = user.name.ifEmpty { "Member" }
@@ -279,27 +282,29 @@ class ProfileActivity : AppCompatActivity() {
                 tvBio.text = user.bio.ifEmpty { "Passionate about skill sharing." }
                 tvConnections.text = user.connections.size.toString()
                 tvProfileViews.text = user.viewedBy.size.toString()
-                
+
                 if (!isFinishing && !isDestroyed) {
                     Glide.with(this)
                         .load(user.photoUrl)
                         .placeholder(R.drawable.ic_user_placeholder)
                         .into(ivProfile)
                 }
-                
-                displaySkills(user.skills)
+
+                // Bind your correct list fields to their relative UI groups
+                displaySkills(user.teachSkills, chipGroupSkillsOffering)
+                displaySkills(user.learnSkills, chipGroupSkillsSeeking)
             }
         }
     }
 
-    private fun displaySkills(skills: List<String>) {
-        chipGroupSkills.removeAllViews()
+    private fun displaySkills(skills: List<String>, chipGroup: ChipGroup) {
+        chipGroup.removeAllViews()
         for (skill in skills) {
             val chip = Chip(this).apply {
                 text = skill
                 setChipBackgroundColorResource(android.R.color.white)
             }
-            chipGroupSkills.addView(chip)
+            chipGroup.addView(chip)
         }
     }
 
@@ -321,25 +326,34 @@ class ProfileActivity : AppCompatActivity() {
         val etName = view.findViewById<EditText>(R.id.etEditName)
         val etTagline = view.findViewById<EditText>(R.id.etEditTagline)
         val etBio = view.findViewById<EditText>(R.id.etEditBio)
-        val etSkills = view.findViewById<EditText>(R.id.etEditSkills)
+
+        // Grab fields for separated arrays
+        val etTeachSkills = view.findViewById<EditText>(R.id.etEditSkills)
+        val etLearnSkills = view.findViewById<EditText>(R.id.etEditSkillsSeeking)
         val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveProfile)
 
         etName?.setText(displayedUser?.name)
         etTagline?.setText(displayedUser?.tagline)
         etBio?.setText(displayedUser?.bio)
-        etSkills?.setText(displayedUser?.skills?.joinToString(", "))
+        etTeachSkills?.setText(displayedUser?.teachSkills?.joinToString(", "))
+        etLearnSkills?.setText(displayedUser?.learnSkills?.joinToString(", "))
 
         btnSave?.setOnClickListener {
             val nameStr = etName?.text?.toString()?.trim() ?: ""
-            val skillsInput = etSkills?.text?.toString()?.trim() ?: ""
-            val skillsList = if (skillsInput.isEmpty()) emptyList() else skillsInput.split(Regex("[,#]")).map { it.trim().removePrefix("#") }.filter { it.isNotEmpty() }
+            val teachInput = etTeachSkills?.text?.toString()?.trim() ?: ""
+            val learnInput = etLearnSkills?.text?.toString()?.trim() ?: ""
+
+            val regex = Regex("[,#]")
+            val teachList = if (teachInput.isEmpty()) emptyList() else teachInput.split(regex).map { it.trim().removePrefix("#") }.filter { it.isNotEmpty() }
+            val learnList = if (learnInput.isEmpty()) emptyList() else learnInput.split(regex).map { it.trim().removePrefix("#") }.filter { it.isNotEmpty() }
 
             if (nameStr.isNotEmpty()) {
                 val updates = mapOf(
                     "name" to nameStr,
                     "tagline" to etTagline?.text?.toString()?.trim(),
                     "bio" to etBio?.text?.toString()?.trim(),
-                    "skills" to skillsList
+                    "teachSkills" to teachList,
+                    "learnSkills" to learnList
                 )
                 db.collection("users").document(currentUserId).update(updates).addOnSuccessListener {
                     if (!isFinishing && !isDestroyed) {

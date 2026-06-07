@@ -34,7 +34,6 @@
             android:orientation="vertical"
             android:paddingBottom="32dp">
 
-            <!-- Header Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -87,7 +86,6 @@
                             android:textColor="#555555"
                             android:textSize="14sp" />
 
-                        <!-- Professional Stats Bar -->
                         <LinearLayout
                             android:id="@+id/layoutStats"
                             android:layout_width="match_parent"
@@ -155,7 +153,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- About Section -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -186,7 +183,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Skills Chips -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -202,12 +198,41 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Skills &amp; Expertise"
+                        android:text="Skills I Can Teach 💡"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:textColor="#000000" />
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/chipGroupSkills"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:chipSpacingVertical="4dp"
+                        app:chipSpacingHorizontal="8dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="0dp"
+                app:cardElevation="1dp"
+                app:strokeWidth="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Skills I Want to Learn 🎯"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="#000000" />
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupSkillsSeeking"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
